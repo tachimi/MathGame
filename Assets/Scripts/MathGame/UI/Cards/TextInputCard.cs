@@ -1,8 +1,10 @@
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using MathGame.CardInteractions;
+using MathGame.Enums;
 using MathGame.Models;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace MathGame.UI.Cards
 {
@@ -14,29 +16,26 @@ namespace MathGame.UI.Cards
     {
         [Header("Text Input Components")]
         [SerializeField] private Transform _inputContainer;
-        [SerializeField] private TextMeshProUGUI _inputDisplay;
-        [SerializeField] private Transform _numbersContainer;
-        [SerializeField] private Button _numberButtonPrefab;
-        [SerializeField] private Button _deleteButton;
-        [SerializeField] private Button _submitButton;
+        
+        [Header("Keypad Buttons")]
+        [SerializeField] private KeypadButton[] _keypadButtons;
 
         [Header("Feedback Settings")]
         [SerializeField] private float _feedbackDuration = 2f;
+        [SerializeField] private int _maxInputLength = 4;
 
         private string _currentInput = "";
-        private Button[] _numberButtons;
 
         protected override void SetupCard()
         {
-            // Настраиваем кнопки
-            if (_deleteButton != null)
-                _deleteButton.onClick.AddListener(OnDeleteClicked);
-
-            if (_submitButton != null)
-                _submitButton.onClick.AddListener(OnSubmitClicked);
-
-            // Создаем кнопки с цифрами
-            CreateNumberButtons();
+            // Настраиваем кнопки клавиатуры
+            SetupKeypadButtons();
+        }
+        
+        protected override void InitializeInteractionStrategy()
+        {
+            _interactionStrategy = new TextInputInteractionStrategy();
+            _interactionStrategy.Initialize(this);
         }
 
         protected override void SetupModeSpecificComponents()
@@ -47,53 +46,54 @@ namespace MathGame.UI.Cards
 
             // Сбрасываем ввод
             _currentInput = "";
-            UpdateInputDisplay();
-            ResetAnswerState();
         }
 
-        protected override bool CanFlip()
-        {
-            // Карточка статична в режиме ввода текста
-            return false;
-        }
 
-        protected override void OnCardClicked()
+        private void SetupKeypadButtons()
         {
-            // В режиме ввода текста клик не переворачивает карточку
-            // Можно добавить другую логику, например, фокус на поле ввода
-        }
-
-        private void CreateNumberButtons()
-        {
-            if (_numbersContainer == null || _numberButtonPrefab == null) return;
-
-            // Очищаем предыдущие кнопки
-            foreach (Transform child in _numbersContainer)
+            if (_keypadButtons == null || _keypadButtons.Length == 0)
             {
-                Destroy(child.gameObject);
+                Debug.LogWarning("TextInputCard: Массив keypad buttons пуст! Настройте кнопки в Inspector.");
+                return;
             }
 
-            _numberButtons = new Button[10];
-
-            // Создаем кнопки 0-9
-            for (int i = 0; i <= 9; i++)
+            // Подписываемся на события всех кнопок
+            foreach (var keypadButton in _keypadButtons)
             {
-                var buttonGO = Instantiate(_numberButtonPrefab, _numbersContainer);
-                var button = buttonGO.GetComponent<Button>();
-                var text = buttonGO.GetComponentInChildren<TextMeshProUGUI>();
+                if (keypadButton != null)
+                {
+                    keypadButton.OnButtonClicked += OnKeypadButtonClicked;
+                }
+            }
+        }
 
-                if (text != null)
-                    text.text = i.ToString();
+        private void OnKeypadButtonClicked(KeypadButton keypadButton)
+        {
+            if (_isAnswered) return;
 
-                int number = i; // Захватываем значение для замыкания
-                button.onClick.AddListener(() => OnNumberClicked(number));
-                _numberButtons[i] = button;
+            switch (keypadButton.ButtonType)
+            {
+                case KeypadButtonType.Number:
+                    OnNumberClicked(keypadButton.NumberValue);
+                    break;
+                    
+                case KeypadButtonType.Delete:
+                    OnDeleteClicked();
+                    break;
+                    
+                case KeypadButtonType.Clear:
+                    OnClearClicked();
+                    break;
+                    
+                case KeypadButtonType.Submit:
+                    OnSubmitClicked();
+                    break;
             }
         }
 
         private void OnNumberClicked(int number)
         {
-            if (_currentInput.Length < 4) // Ограничиваем длину ввода
+            if (_currentInput.Length < _maxInputLength)
             {
                 _currentInput += number.ToString();
                 UpdateInputDisplay();
@@ -111,6 +111,13 @@ namespace MathGame.UI.Cards
             }
         }
 
+        private void OnClearClicked()
+        {
+            _currentInput = "";
+            UpdateInputDisplay();
+            UpdateSubmitButtonState();
+        }
+
         private void OnSubmitClicked()
         {
             if (_isAnswered || string.IsNullOrEmpty(_currentInput)) return;
@@ -119,24 +126,28 @@ namespace MathGame.UI.Cards
             {
                 SelectAnswer(answer);
 
-                // Если ответ неправильный, показываем правильный ответ
+                // Отключаем кнопки после ответа
+                SetButtonsInteractable(false);
+
+                // Если ответ неправильный, показываем красный -> правильный ответ -> автоматический переход
                 if (answer != _currentQuestion.CorrectAnswer)
                 {
-                    StartCoroutine(ShowCorrectAnswerAndProceed());
+                    ShowIncorrectThenCorrectAndProceedAsync(this.GetCancellationTokenOnDestroy()).Forget();
                 }
                 else
                 {
-                    // Правильный ответ - показываем зеленый цвет
-                    ShowCorrectFeedback();
+                    // Правильный ответ - показываем зеленый и автоматически переходим
+                    ShowCorrectAndProceedAsync(this.GetCancellationTokenOnDestroy()).Forget();
                 }
-
-                // Отключаем кнопки после ответа
-                SetButtonsInteractable(false);
             }
         }
 
-        private void UpdateInputDisplay()
+        protected override void UpdateInputDisplay()
         {
+            // Вызываем базовый метод для обновления _questionDisplay
+            base.UpdateInputDisplay();
+            
+            // Переопределяем логику для поля ввода - показываем введенный текст или "?"
             if (_inputDisplay != null)
             {
                 _inputDisplay.text = string.IsNullOrEmpty(_currentInput) ? "?" : _currentInput;
@@ -146,73 +157,89 @@ namespace MathGame.UI.Cards
 
         private void UpdateSubmitButtonState()
         {
-            if (_submitButton != null)
+            // Находим кнопку Submit и обновляем её состояние
+            foreach (var keypadButton in _keypadButtons)
             {
-                _submitButton.interactable = !string.IsNullOrEmpty(_currentInput) && !_isAnswered;
+                if (keypadButton != null && keypadButton.ButtonType == KeypadButtonType.Submit)
+                {
+                    bool canSubmit = !string.IsNullOrEmpty(_currentInput) && !_isAnswered;
+                    keypadButton.SetInteractable(canSubmit);
+                    break;
+                }
             }
         }
 
         private void SetButtonsInteractable(bool interactable)
         {
-            // Отключаем/включаем цифровые кнопки
-            if (_numberButtons != null)
+            if (_keypadButtons == null) return;
+
+            foreach (var keypadButton in _keypadButtons)
             {
-                foreach (var button in _numberButtons)
+                if (keypadButton == null) continue;
+
+                // Для кнопки Submit особая логика - она активна только при наличии ввода
+                if (keypadButton.ButtonType == KeypadButtonType.Submit)
                 {
-                    if (button != null)
-                        button.interactable = interactable;
+                    bool canSubmit = interactable && !string.IsNullOrEmpty(_currentInput) && !_isAnswered;
+                    keypadButton.SetInteractable(canSubmit);
+                }
+                else
+                {
+                    keypadButton.SetInteractable(interactable);
                 }
             }
-
-            // Отключаем кнопки управления
-            if (_deleteButton != null)
-                _deleteButton.interactable = interactable;
-
-            if (_submitButton != null)
-                _submitButton.interactable = interactable && !string.IsNullOrEmpty(_currentInput);
         }
 
-        private void ShowCorrectFeedback()
+        private async UniTask ShowCorrectAndProceedAsync(CancellationToken cancellationToken = default)
         {
+            // Показываем зеленый цвет для правильного ответа
             if (_inputDisplay != null)
             {
                 _inputDisplay.color = Color.green;
             }
+
+            await UniTask.Delay((int)(_feedbackDuration * 1000), cancellationToken: cancellationToken);
+
+            // Автоматически переходим к следующему вопросу
+            AutoProceedToNext();
         }
 
-        private IEnumerator ShowCorrectAnswerAndProceed()
+        private async UniTask ShowIncorrectThenCorrectAndProceedAsync(CancellationToken cancellationToken = default)
         {
+            // Показываем красный цвет для неправильного ответа
             if (_inputDisplay != null)
             {
-                _inputDisplay.text = $"Правильно: {_currentQuestion.CorrectAnswer}";
                 _inputDisplay.color = Color.red;
             }
 
-            yield return new WaitForSeconds(_feedbackDuration);
+            await UniTask.Delay((int)(_feedbackDuration * 1000), cancellationToken: cancellationToken);
 
-            // Запускаем анимацию свайпа (она сама вызовет OnSwipeUp после завершения)
-            StartCoroutine(PlaySwipeUpAnimation());
+            // Показываем правильный ответ зеленым цветом
+            if (_inputDisplay != null)
+            {
+                _inputDisplay.text = _currentQuestion.CorrectAnswer.ToString();
+                _inputDisplay.color = Color.green;
+            }
+
+            await UniTask.Delay((int)(_feedbackDuration * 1000), cancellationToken: cancellationToken);
+
+            // Автоматически переходим к следующему вопросу
+            AutoProceedToNext();
         }
 
-        protected override void OnSwipeUpDetected()
+        private void AutoProceedToNext()
         {
-            // Если не ответили - обрабатываем ввод перед анимацией
-            if (!_isAnswered && !string.IsNullOrEmpty(_currentInput))
-            {
-                OnSubmitClicked(); // Пытаемся отправить текущий ввод
-            }
-            else if (!_isAnswered)
-            {
-                SelectAnswer(-1); // Неправильный ответ, если ничего не введено
-            }
-            
-            // Запускаем базовую анимацию (она вызовет событие OnSwipeUp после завершения)
-            base.OnSwipeUpDetected();
+            // Запускаем анимацию исчезновения карточки и вызываем событие завершения раунда
+            PlaySwipeUpAnimationAsync().Forget();
         }
+
 
         public override void SetQuestion(Question question)
         {
             base.SetQuestion(question);
+            
+            // Сбрасываем ввод для нового вопроса
+            _currentInput = "";
             
             // Включаем кнопки для нового вопроса
             SetButtonsInteractable(true);
@@ -222,19 +249,13 @@ namespace MathGame.UI.Cards
         {
             base.OnDestroy();
 
-            if (_deleteButton != null)
-                _deleteButton.onClick.RemoveAllListeners();
-
-            if (_submitButton != null)
-                _submitButton.onClick.RemoveAllListeners();
-
-            // Очищаем цифровые кнопки
-            if (_numberButtons != null)
+            // Отписываемся от событий keypad кнопок
+            if (_keypadButtons != null)
             {
-                foreach (var button in _numberButtons)
+                foreach (var keypadButton in _keypadButtons)
                 {
-                    if (button != null)
-                        button.onClick.RemoveAllListeners();
+                    if (keypadButton != null)
+                        keypadButton.OnButtonClicked -= OnKeypadButtonClicked;
                 }
             }
         }

@@ -16,7 +16,7 @@ namespace MathGame.Models
             return $"{FirstNumber} {operationSymbol} {SecondNumber} = ?";
         }
         
-        private string GetOperationSymbol()
+        public string GetOperationSymbol()
         {
             return Operation switch
             {

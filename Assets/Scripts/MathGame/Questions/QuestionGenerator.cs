@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using MathGame.Configs;
 using MathGame.Enums;
 using MathGame.Models;
 using MathGame.Settings;

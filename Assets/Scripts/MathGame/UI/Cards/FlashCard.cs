@@ -1,3 +1,4 @@
+using MathGame.CardInteractions;
 using MathGame.Models;
 using TMPro;
 using UnityEngine;
@@ -11,19 +12,26 @@ namespace MathGame.UI.Cards
     /// </summary>
     public class FlashCard : BaseMathCard
     {
-        [Header("Flash Components")]
-        [SerializeField] private TextMeshProUGUI _answerText;
-        [SerializeField] private GameObject _answerContainer;
+        [Header("Flash Components")] [SerializeField]
+        private TextMeshProUGUI _answerText;
 
-        [Header("Visual Feedback")]
-        [SerializeField] private Color _rememberedColor = Color.green;
+        [Header("Visual Feedback")] [SerializeField]
+        private Color _rememberedColor = Color.green;
+
         [SerializeField] private Color _notRememberedColor = Color.red;
+
+        [SerializeField]
+        private float _maxDragDistance = 100f; // Максимальное расстояние для полной интенсивности цвета
 
         protected override void SetupCard()
         {
             // Настройка Flash карточки
-            if (_answerContainer != null)
-                _answerContainer.SetActive(false);
+        }
+        
+        protected override void InitializeInteractionStrategy()
+        {
+            _interactionStrategy = new FlashInteractionStrategy();
+            _interactionStrategy.Initialize(this);
         }
 
         protected override void SetupModeSpecificComponents()
@@ -34,64 +42,36 @@ namespace MathGame.UI.Cards
                 _answerText.text = _currentQuestion.CorrectAnswer.ToString();
                 _answerText.color = Color.black; // Сбрасываем цвет
             }
-
-            // Скрываем контейнер с ответом (показываем только на обратной стороне)
-            if (_answerContainer != null)
-                _answerContainer.SetActive(false);
         }
 
-        protected override void ActivateBackSideComponents()
+        public override void OnDragFeedback(float dragDistance)
         {
-            // Активируем показ правильного ответа
-            if (_answerContainer != null)
-                _answerContainer.SetActive(true);
-        }
+            // Применяем визуальную обратную связь только если карточка перевернута и есть текст ответа
+            if (!_isFlipped || _answerText == null) return;
 
-        protected override void ShowFrontSide()
-        {
-            base.ShowFrontSide();
+            // Вычисляем интенсивность цвета на основе расстояния перетаскивания
+            float intensity = Mathf.Clamp01(Mathf.Abs(dragDistance) / _maxDragDistance);
 
-            // Скрываем ответ на лицевой стороне
-            if (_answerContainer != null)
-                _answerContainer.SetActive(false);
-        }
-
-        protected override void ShowBackSide()
-        {
-            base.ShowBackSide();
-
-            // Показываем ответ на обратной стороне
-            if (_answerContainer != null)
-                _answerContainer.SetActive(true);
-        }
-
-        protected override void OnSwipeUpDetected()
-        {
-            // Свайп вверх = "Запомнил" = правильный ответ
-            if (_isFlipped) // Можно отвечать только когда карточка перевернута
+            if (dragDistance > 0)
             {
-                SelectAnswer(_currentQuestion.CorrectAnswer);
-                ShowRememberedFeedback();
-                
-                // Запускаем базовую анимацию (она вызовет событие OnSwipeUp после завершения)
-                base.OnSwipeUpDetected();
+                // Тянем вверх - зеленый цвет (запомнил)
+                Color feedbackColor = Color.Lerp(Color.black, _rememberedColor, intensity);
+                _answerText.color = feedbackColor;
+            }
+            else if (dragDistance < 0)
+            {
+                // Тянем вниз - красный цвет (не запомнил)
+                Color feedbackColor = Color.Lerp(Color.black, _notRememberedColor, intensity);
+                _answerText.color = feedbackColor;
+            }
+            else
+            {
+                // Нет перетаскивания - возвращаем черный цвет
+                _answerText.color = Color.black;
             }
         }
 
-        protected override void OnSwipeDownDetected()
-        {
-            // Свайп вниз = "Не запомнил" = неправильный ответ
-            if (_isFlipped) // Можно отвечать только когда карточка перевернута
-            {
-                SelectAnswer(-1); // Неправильный ответ
-                ShowNotRememberedFeedback();
-                
-                // Запускаем базовую анимацию (она вызовет событие OnSwipeDown после завершения)
-                base.OnSwipeDownDetected();
-            }
-        }
-
-        private void ShowRememberedFeedback()
+        public void ShowRememberedFeedback()
         {
             // Визуальная обратная связь для "запомнил"
             if (_answerText != null)
@@ -100,59 +80,14 @@ namespace MathGame.UI.Cards
             }
 
             // Можно добавить дополнительные эффекты (анимацию, звук и т.д.)
-            ShowPositiveFeedback();
         }
 
-        private void ShowNotRememberedFeedback()
+        public void ShowNotRememberedFeedback()
         {
             // Визуальная обратная связь для "не запомнил"
             if (_answerText != null)
             {
                 _answerText.color = _notRememberedColor;
-            }
-
-            // Можно добавить дополнительные эффекты
-            ShowNegativeFeedback();
-        }
-
-        private void ShowPositiveFeedback()
-        {
-            // Дополнительные эффекты для положительного ответа
-            // Например, увеличение текста или мигание зеленым
-            if (_answerContainer != null)
-            {
-                var canvasGroup = _answerContainer.GetComponent<CanvasGroup>();
-                if (canvasGroup == null)
-                    canvasGroup = _answerContainer.AddComponent<CanvasGroup>();
-
-                StartCoroutine(FlashEffect(canvasGroup, _rememberedColor));
-            }
-        }
-
-        private void ShowNegativeFeedback()
-        {
-            // Дополнительные эффекты для отрицательного ответа
-            if (_answerContainer != null)
-            {
-                var canvasGroup = _answerContainer.GetComponent<CanvasGroup>();
-                if (canvasGroup == null)
-                    canvasGroup = _answerContainer.AddComponent<CanvasGroup>();
-
-                StartCoroutine(FlashEffect(canvasGroup, _notRememberedColor));
-            }
-        }
-
-        private System.Collections.IEnumerator FlashEffect(CanvasGroup canvasGroup, Color color)
-        {
-            // Простой эффект мигания
-            float originalAlpha = canvasGroup.alpha;
-            
-            for (int i = 0; i < 3; i++)
-            {
-                canvasGroup.alpha = 0.5f;
-                yield return new WaitForSeconds(0.1f);
-                canvasGroup.alpha = originalAlpha;
-                yield return new WaitForSeconds(0.1f);
             }
         }
 

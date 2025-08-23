@@ -1,6 +1,7 @@
 using MathGame.Core;
 using MathGame.Enums;
 using MathGame.Settings;
+using MathGame.UI.Settings;
 using ScreenManager.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,27 +10,23 @@ namespace MathGame.UI
 {
     public class SettingsScreen : UIScreen
     {
-        [Header("Difficulty Settings")] [SerializeField]
-        private DifficultySelector _difficultySelector;
-
-        [Header("Questions Count")] [SerializeField]
-        private QuestionCountSelector _questionCountSelector;
-
-        [Header("Answer Mode")] [SerializeField]
-        private AnswerModeSelector _answerModeSelector;
-
-        [Header("Buttons")] [SerializeField] private Button _backButton;
+        [Header("Settings Panel Switcher")]
+        [SerializeField] private SimpleSettingsPanelSwitcher _panelSwitcher;
+        
+        [Header("Main Settings Components")]
+        [SerializeField] private DifficultySelector _difficultySelector;
+        [SerializeField] private QuestionCountSelector _questionCountSelector;
+        [SerializeField] private GameTypeSelector _gameTypeSelector;
+        [SerializeField] private Button _backButton;
+        
+        [Header("Cards Settings Components")]
+        [SerializeField] private AnswerModeSelector _answerModeSelector;
 
         private GameSettings _globalSettings;
 
         protected void OnEnable()
         {
             _globalSettings = GlobalSettingsManager.LoadGlobalSettings();
-            SetupUI();
-        }
-
-        private void SetupUI()
-        {
             SetupValues();
             SetupEventHandlers();
         }
@@ -50,8 +47,15 @@ namespace MathGame.UI
             {
                 _answerModeSelector.SelectAnswerMode(_globalSettings.AnswerMode);
             }
+
+            if (_gameTypeSelector != null)
+            {
+                _gameTypeSelector.SetGameTypeWithoutNotification(_globalSettings.GameType);
+            }
             
-            Debug.LogWarning($"Loaded settings: Difficulty: {_globalSettings.Difficulty}, Question Count: {_globalSettings.QuestionsCount}, Answer Mode: {_globalSettings.AnswerMode}");
+            Debug.Log($"SettingsScreen: Загружены настройки - Сложность: {_globalSettings.Difficulty}, " +
+                      $"Вопросы: {_globalSettings.QuestionsCount}, Режим ответа: {_globalSettings.AnswerMode}, " +
+                      $"Тип игры: {_globalSettings.GameType}");
         }
 
         private void SetupEventHandlers()
@@ -69,6 +73,12 @@ namespace MathGame.UI
             if (_answerModeSelector != null)
             {
                 _answerModeSelector.OnAnswerModeChanged += OnAnswerModeChanged;
+            }
+
+            if (_gameTypeSelector != null)
+            {
+                _gameTypeSelector.OnGameTypeChanged += OnGameTypeChanged;
+                _gameTypeSelector.OnGameTypeSettingsRequested += OnGameTypeSettingsRequested;
             }
 
             if (_backButton != null)
@@ -95,6 +105,24 @@ namespace MathGame.UI
             GlobalSettingsManager.SaveGlobalSettings(_globalSettings);
         }
 
+        private void OnGameTypeChanged(GameType gameType)
+        {
+            _globalSettings.GameType = gameType;
+            GlobalSettingsManager.SaveGlobalSettings(_globalSettings);
+            
+            Debug.Log($"SettingsScreen: Выбран режим игры {gameType} ({_gameTypeSelector?.GetCurrentDisplayName()})");
+        }
+        
+        private void OnGameTypeSettingsRequested(GameType gameType)
+        {
+            if (_panelSwitcher != null)
+            {
+                _panelSwitcher.ShowGameModeSettings(gameType);
+            }
+            
+            Debug.Log($"SettingsScreen: Запрошены настройки для режима {gameType}");
+        }
+        
         private void OnBackClicked()
         {
             ScreensManager.OpenScreen<MainMenuScreen>();
@@ -104,7 +132,11 @@ namespace MathGame.UI
         protected override void OnDestroy()
         {
             base.OnDestroy();
+            CleanupEventHandlers();
+        }
 
+        private void CleanupEventHandlers()
+        {
             if (_difficultySelector != null)
                 _difficultySelector.OnDifficultyChanged -= OnDifficultyChanged;
 
@@ -113,6 +145,12 @@ namespace MathGame.UI
 
             if (_answerModeSelector != null)
                 _answerModeSelector.OnAnswerModeChanged -= OnAnswerModeChanged;
+
+            if (_gameTypeSelector != null)
+            {
+                _gameTypeSelector.OnGameTypeChanged -= OnGameTypeChanged;
+                _gameTypeSelector.OnGameTypeSettingsRequested -= OnGameTypeSettingsRequested;
+            }
 
             if (_backButton != null)
                 _backButton.onClick.RemoveAllListeners();

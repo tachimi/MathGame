@@ -1,4 +1,5 @@
 using System;
+using MathGame.CardInteractions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,22 +12,30 @@ namespace MathGame.UI.Cards
     /// </summary>
     public class MultipleChoiceCard : BaseMathCard
     {
-        [Header("Multiple Choice Components")]
-        [SerializeField] private Transform _answersContainer;
+        [Header("Multiple Choice Components")] [SerializeField]
+        private Transform _answersContainer;
+
         [SerializeField] private Button _answerButtonPrefab;
-        
-        [Header("Visual Feedback")]
-        [SerializeField] private Color _correctAnswerColor = Color.green;
+        [SerializeField] private int _answersAmount = 6;
+
+        [Header("Visual Feedback")] [SerializeField]
+        private Color _correctAnswerColor = Color.green;
+
         [SerializeField] private Color _wrongAnswerColor = Color.red;
         [SerializeField] private Color _disabledColor = Color.gray;
 
         private Button[] _answerButtons;
-        private bool _firstAttemptUsed = false; // Флаг для отслеживания первой попытки
-        private int _firstSelectedAnswer = -1; // Первый выбранный ответ
+        public bool _firstAttemptUsed = false; // Флаг для отслеживания первой попытки
 
         protected override void SetupCard()
         {
             // Базовая настройка уже выполнена в базовом классе
+        }
+        
+        protected override void InitializeInteractionStrategy()
+        {
+            _interactionStrategy = new MultipleChoiceInteractionStrategy();
+            _interactionStrategy.Initialize(this);
         }
 
         protected override void SetupModeSpecificComponents()
@@ -35,7 +44,6 @@ namespace MathGame.UI.Cards
 
             // Сбрасываем флаги для нового вопроса
             _firstAttemptUsed = false;
-            _firstSelectedAnswer = -1;
 
             // Очищаем предыдущие кнопки
             ClearAnswerButtons();
@@ -48,13 +56,6 @@ namespace MathGame.UI.Cards
             {
                 CreateAnswerButton(answers[i], i);
             }
-        }
-
-        protected override void ActivateBackSideComponents()
-        {
-            // Активируем контейнер с ответами
-            if (_answersContainer != null)
-                _answersContainer.gameObject.SetActive(true);
         }
 
         private void CreateAnswerButton(int answer, int index)
@@ -76,11 +77,11 @@ namespace MathGame.UI.Cards
 
         private int[] GenerateAnswerOptions()
         {
-            var options = new int[4];
+            var options = new int[_answersAmount];
             options[0] = _currentQuestion.CorrectAnswer;
 
-            // Генерируем 3 неправильных ответа
-            for (int i = 1; i < 4; i++)
+            // Генерируем неправильныe ответы
+            for (int i = 1; i < _answersAmount; i++)
             {
                 int wrongAnswer;
                 do
@@ -134,52 +135,21 @@ namespace MathGame.UI.Cards
             }
         }
 
-        protected override void OnSwipeUpDetected()
-        {
-            // Свайп работает только на обратной стороне карточки (когда показаны варианты ответов)
-            if (!_isFlipped) return;
-
-            // Если не было ни одной попытки - засчитываем неправильный ответ
-            if (!_firstAttemptUsed)
-            {
-                SelectAnswer(-1); // Неправильный ответ (не пытались отвечать)
-            }
-            // Если была попытка, но не ответили правильно - ответ уже был засчитан при первой попытке
-
-            // Запускаем базовую анимацию (она вызовет событие OnSwipeUp после завершения)
-            base.OnSwipeUpDetected();
-        }
-        
-        protected override void OnSwipeDownDetected()
-        {
-            // Свайп вниз также работает только на обратной стороне
-            if (!_isFlipped) return;
-
-            // Если не было ни одной попытки - засчитываем неправильный ответ
-            if (!_firstAttemptUsed)
-            {
-                SelectAnswer(-1); // Неправильный ответ (не пытались отвечать)
-            }
-
-            // Запускаем базовую анимацию
-            base.OnSwipeDownDetected();
-        }
 
         private void OnAnswerOptionSelected(int answer)
         {
             bool isCorrect = answer == _currentQuestion.CorrectAnswer;
-            
+
             // Если это первая попытка
             if (!_firstAttemptUsed)
             {
                 _firstAttemptUsed = true;
-                _firstSelectedAnswer = answer;
-                
+
                 // Отправляем ответ только на первой попытке
                 // Правильный ответ засчитывается только если выбран с первой попытки
                 SelectAnswer(answer);
             }
-            
+
             // Подсвечиваем выбранную кнопку
             HighlightSelectedAnswer(answer, isCorrect);
         }
@@ -193,14 +163,14 @@ namespace MathGame.UI.Cards
                 if (button == null) continue;
 
                 var text = button.GetComponentInChildren<TextMeshProUGUI>();
-                
+
                 if (text != null && int.TryParse(text.text, out int buttonAnswer))
                 {
                     if (buttonAnswer == selectedAnswer)
                     {
                         // Подсвечиваем текст выбранной кнопки
                         text.color = isCorrect ? _correctAnswerColor : _wrongAnswerColor;
-                        
+
                         // Отключаем кнопку после выбора
                         button.interactable = false;
                     }
@@ -223,14 +193,14 @@ namespace MathGame.UI.Cards
                     }
                 }
             }
-            
+
             // Если нашли правильный ответ (не обязательно с первой попытки), показываем его
             if (isCorrect)
             {
                 ShowCorrectAnswer();
             }
         }
-        
+
         private void ShowCorrectAnswer()
         {
             // Отключаем все оставшиеся активные кнопки
@@ -239,7 +209,7 @@ namespace MathGame.UI.Cards
                 if (button != null)
                 {
                     button.interactable = false;
-                    
+
                     var text = button.GetComponentInChildren<TextMeshProUGUI>();
                     if (text != null && int.TryParse(text.text, out int buttonAnswer))
                     {

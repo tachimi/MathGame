@@ -52,7 +52,7 @@ namespace MathGame.AnswerStrategies
             _answerOptions = new List<int> { _currentQuestion.CorrectAnswer };
             
             // Генерируем неправильные ответы
-            int wrongAnswersCount = 3;
+            int wrongAnswersCount = 5;
             var range = 10; // Диапазон для генерации неправильных ответов
             
             while (_answerOptions.Count < wrongAnswersCount + 1)

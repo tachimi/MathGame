@@ -1,4 +1,5 @@
 using System;
+using MathGame.Enums;
 using MathGame.Models;
 using MathGame.Questions;
 using MathGame.Settings;
@@ -9,17 +10,16 @@ namespace MathGame.Core
     {
         public event Action<Question> OnQuestionGenerated;
         public event Action<QuestionResult> OnQuestionAnswered;
-        public event Action<GameSessionResult> OnSessionCompleted;
-        
-        public int CurrentQuestionIndex { get; set; }
-        
+        public event Action<GameSessionResult, SessionEndReason> OnSessionCompleted;
+
+        public int CurrentQuestionIndex { get; private set; }
+
         private readonly QuestionGenerator _generator;
         private GameSettings _settings;
         private GameSessionResult _sessionResult;
         private Question _currentQuestion;
         private DateTime _questionStartTime;
-        private int _currentQuestionIndex;
-        
+
         // Конструктор для DI
         public GameSessionController(QuestionGenerator generator)
         {
@@ -31,7 +31,7 @@ namespace MathGame.Core
             _settings = settings;
             _generator.Initialize(settings);
             _sessionResult = new GameSessionResult();
-            _currentQuestionIndex = 0;
+            CurrentQuestionIndex = 0;
         }
         
         public void StartSession()
@@ -39,7 +39,7 @@ namespace MathGame.Core
             _sessionResult = new GameSessionResult();
             _sessionResult.StartTime = DateTime.Now;
             _sessionResult.GameSettings = _settings; // Сохраняем настройки
-            _currentQuestionIndex = 0;
+            CurrentQuestionIndex = 0;
             
             // Сбрасываем состояние генератора для новой сессии
             _generator.ResetSession();
@@ -78,9 +78,9 @@ namespace MathGame.Core
         
         public void NextQuestion()
         {
-            _currentQuestionIndex++;
+            CurrentQuestionIndex++;
             
-            if (_currentQuestionIndex < _settings.QuestionsCount)
+            if (CurrentQuestionIndex < _settings.QuestionsCount)
             {
                 GenerateNextQuestion();
             }
@@ -94,18 +94,13 @@ namespace MathGame.Core
         private void EndSession()
         {
             _sessionResult.EndTime = DateTime.Now;
-            OnSessionCompleted?.Invoke(_sessionResult);
+            OnSessionCompleted?.Invoke(_sessionResult, SessionEndReason.Completed);
         }
         
         public void StopSession()
         {
             _sessionResult.EndTime = DateTime.Now;
-            OnSessionCompleted?.Invoke(_sessionResult);
-        }
-        
-        public Question GetCurrentQuestion()
-        {
-            return _currentQuestion;
+            OnSessionCompleted?.Invoke(_sessionResult, SessionEndReason.UserCanceled);
         }
     }
 }

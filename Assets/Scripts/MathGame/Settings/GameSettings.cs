@@ -29,6 +29,11 @@ namespace MathGame.Settings
         /// </summary>
         public AnswerMode AnswerMode { get; set; } = AnswerMode.MultipleChoice;
         
+        /// <summary>
+        /// Тип игрового режима (Cards, Balloons, Grid)
+        /// </summary>
+        public GameType GameType { get; set; } = GameType.Cards;
+        
         #endregion
         
         #region Настройки игровой сессии (выбранные пользователем)
@@ -65,6 +70,7 @@ namespace MathGame.Settings
             Difficulty = difficulty;
             QuestionsCount = questionsCount;
             AnswerMode = answerMode;
+            GameType = GameType.Cards; // По умолчанию карточки
             EnabledOperations = new List<MathOperation>();
             NumberRanges = new List<NumberRange>();
         }
@@ -80,6 +86,7 @@ namespace MathGame.Settings
             Difficulty = source.Difficulty;
             QuestionsCount = source.QuestionsCount;
             AnswerMode = source.AnswerMode;
+            GameType = source.GameType;
             
             // Копируем настройки сессии
             EnabledOperations = new List<MathOperation>(source.EnabledOperations);
@@ -128,8 +135,8 @@ namespace MathGame.Settings
         public string GetDescription()
         {
             return $"Сложность: {Difficulty}, Вопросов: {QuestionsCount}, " +
-                   $"Режим: {AnswerMode}, Операций: {EnabledOperations.Count}, " +
-                   $"Диапазонов: {NumberRanges.Count}";
+                   $"Режим игры: {GameType}, Режим ответа: {AnswerMode}, " +
+                   $"Операций: {EnabledOperations.Count}, Диапазонов: {NumberRanges.Count}";
         }
         
         #endregion

@@ -1,8 +1,10 @@
 using MathGame.Core;
+using MathGame.Enums;
+using MathGame.GameModes;
+using MathGame.Interfaces;
 using MathGame.Models;
 using MathGame.Questions;
 using MathGame.Settings;
-using MathGame.UI.Cards;
 using ScreenManager.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,10 +18,10 @@ namespace MathGame.UI
         [Header("UI References")]
         [SerializeField] private Button _homeButton;
         [SerializeField] private TextMeshProUGUI _progressText;
-        [SerializeField] private MathCardFactory _cardFactory;
+        [SerializeField] private Transform _gameContainer;
 
         private GameSessionController _sessionController;
-        private BaseMathCard _currentCard;
+        private IMathGameMode _currentGameMode;
         private GameSettings _gameSettings;
         
         [Inject]
@@ -33,12 +35,14 @@ namespace MathGame.UI
             _gameSettings = context;
             
             SetupUI();
+            SetupGameMode();
             SetupGameSession();
         }
         
         private void SetupGameSession()
         {
             // Проверяем, что контроллер был инжектирован
+            // Если нет - создаем новый (такое может произойти при рестарте из экрана результатов)
             if (_sessionController == null)
             {
                 Debug.LogWarning("GameSessionController is null! Creating new instance...");
@@ -64,37 +68,57 @@ namespace MathGame.UI
             if (_homeButton != null)
                 _homeButton.onClick.AddListener(OnHomeClicked);
             
-            // Проверяем, что фабрика настроена
-            if (_cardFactory != null && !_cardFactory.AreAllPrefabsAssigned())
+            // Проверяем, что контейнер для игры назначен
+            if (_gameContainer == null)
             {
-                Debug.LogError($"GameScreen: {_cardFactory.GetMissingPrefabsInfo()}");
+                Debug.LogError("GameScreen: _gameContainer не назначен! Игровой режим не сможет создать UI.");
             }
             
             UpdateProgressText();
         }
         
+        private void SetupGameMode()
+        {
+            try
+            {
+                // Создаем игровой режим через фабрику
+                _currentGameMode = GameModeFactory.Create(_gameSettings.GameType, _gameSettings, _gameContainer);
+                
+                // Подписываемся на события игрового режима
+                _currentGameMode.OnAnswerSelected += OnGameModeAnswerSelected;
+                _currentGameMode.OnRoundComplete += OnGameModeRoundComplete;
+                
+                Debug.Log($"GameScreen: Создан игровой режим {_gameSettings.GameType}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"GameScreen: Ошибка создания игрового режима {_gameSettings.GameType}: {ex.Message}");
+                
+                // Fallback - используем Cards режим
+                if (_gameSettings.GameType != Enums.GameType.Cards)
+                {
+                    Debug.LogWarning("GameScreen: Переключаемся на режим Cards как fallback");
+                    _gameSettings.GameType = Enums.GameType.Cards;
+                    _currentGameMode = GameModeFactory.Create(_gameSettings.GameType, _gameSettings, _gameContainer);
+                    _currentGameMode.OnAnswerSelected += OnGameModeAnswerSelected;
+                    _currentGameMode.OnRoundComplete += OnGameModeRoundComplete;
+                }
+            }
+        }
+        
         private void OnQuestionGenerated(Question question)
         {
-            if (_cardFactory != null)
+            if (_currentGameMode != null)
             {
-                // Отписываемся от предыдущей карточки
-                UnsubscribeFromCurrentCard();
+                // Устанавливаем вопрос в игровом режиме
+                _currentGameMode.SetQuestion(question);
                 
-                // Создаем новую карточку для текущего режима
-                _currentCard = _cardFactory.CreateCard(_gameSettings.AnswerMode);
-                
-                if (_currentCard != null)
-                {
-                    // Подписываемся на события новой карточки
-                    SubscribeToCurrentCard();
-                    
-                    // Устанавливаем вопрос
-                    _currentCard.SetQuestion(question);
-                }
-                else
-                {
-                    Debug.LogError($"GameScreen: Не удалось создать карточку для режима {_gameSettings.AnswerMode}");
-                }
+                // Начинаем раунд
+                _currentGameMode.StartRound();
+            }
+            else
+            {
+                Debug.LogError("GameScreen: _currentGameMode is null!");
             }
             
             UpdateProgressText();
@@ -105,16 +129,27 @@ namespace MathGame.UI
             // Не обновляем прогресс здесь - только после свайпа
         }
         
-        private void OnSessionCompleted(GameSessionResult result)
+        private void OnSessionCompleted(GameSessionResult result, SessionEndReason reason)
         {
-            // Открываем экран результатов
-            ScreensManager.OpenScreen<ResultScreen, GameSessionResult>(result);
-            CloseScreen();
+            switch (reason)
+            {
+                case SessionEndReason.Completed:
+                    // Естественное завершение - показываем результаты
+                    ScreensManager.OpenScreen<ResultScreen, GameSessionResult>(result);
+                    CloseScreen();
+                    break;
+                    
+                case SessionEndReason.UserCanceled:
+                    // Принудительное завершение - возвращаемся на главный экран
+                    ScreensManager.OpenScreen<MainMenuScreen>();
+                    CloseScreen();
+                    break;
+            }
         }
         
         private void UpdateProgressText()
         {
-            if (_progressText != null)
+            if (_progressText != null && _sessionController != null)
             {
                 _progressText.text = $"{_sessionController.CurrentQuestionIndex}/{_gameSettings.QuestionsCount}";
             }
@@ -123,11 +158,9 @@ namespace MathGame.UI
         private void OnHomeClicked()
         {
             _sessionController?.StopSession();
-            ScreensManager.OpenScreen<MainMenuScreen>();
-            CloseScreen();
         }
         
-        private void OnCardAnswerSelected(int selectedAnswer)
+        private void OnGameModeAnswerSelected(int selectedAnswer)
         {
             if (_sessionController != null)
             {
@@ -135,9 +168,12 @@ namespace MathGame.UI
             }
         }
         
-        private void OnCardSwipeUp()
+        private void OnGameModeRoundComplete()
         {
-            // Это событие вызывается ПОСЛЕ завершения анимации свайпа
+            // Событие вызывается ПОСЛЕ завершения раунда (анимации свайпа)
+            // Завершаем текущий раунд в игровом режиме
+            _currentGameMode?.EndRound();
+            
             // Проверяем, не последний ли это вопрос
             if (_sessionController.CurrentQuestionIndex >= _gameSettings.QuestionsCount)
             {
@@ -151,39 +187,12 @@ namespace MathGame.UI
             }
         }
         
-        private void OnCardSwipeDown()
+        private void UnsubscribeFromGameMode()
         {
-            // Это событие вызывается ПОСЛЕ завершения анимации свайпа
-            // Проверяем, не последний ли это вопрос
-            if (_sessionController.CurrentQuestionIndex >= _gameSettings.QuestionsCount)
+            if (_currentGameMode != null)
             {
-                // Последний вопрос - завершаем сессию
-                _sessionController?.StopSession();
-            }
-            else
-            {
-                UpdateProgressText();
-                _sessionController?.NextQuestion();
-            }
-        }
-        
-        private void SubscribeToCurrentCard()
-        {
-            if (_currentCard != null)
-            {
-                _currentCard.OnAnswerSelected += OnCardAnswerSelected;
-                _currentCard.OnSwipeUp += OnCardSwipeUp;
-                _currentCard.OnSwipeDown += OnCardSwipeDown;
-            }
-        }
-        
-        private void UnsubscribeFromCurrentCard()
-        {
-            if (_currentCard != null)
-            {
-                _currentCard.OnAnswerSelected -= OnCardAnswerSelected;
-                _currentCard.OnSwipeUp -= OnCardSwipeUp;
-                _currentCard.OnSwipeDown -= OnCardSwipeDown;
+                _currentGameMode.OnAnswerSelected -= OnGameModeAnswerSelected;
+                _currentGameMode.OnRoundComplete -= OnGameModeRoundComplete;
             }
         }
         
@@ -191,6 +200,7 @@ namespace MathGame.UI
         {
             base.OnDestroy();
             
+            // Отписываемся от контроллера сессии
             if (_sessionController != null)
             {
                 _sessionController.OnQuestionGenerated -= OnQuestionGenerated;
@@ -198,11 +208,13 @@ namespace MathGame.UI
                 _sessionController.OnSessionCompleted -= OnSessionCompleted;
             }
             
+            // Очищаем UI подписки
             if (_homeButton != null)
                 _homeButton.onClick.RemoveAllListeners();
                 
-            // Отписываемся от текущей карточки
-            UnsubscribeFromCurrentCard();
+            // Отписываемся от игрового режима и очищаем ресурсы
+            UnsubscribeFromGameMode();
+            _currentGameMode?.Cleanup();
         }
     }
 }
