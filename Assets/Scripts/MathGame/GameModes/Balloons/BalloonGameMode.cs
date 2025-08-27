@@ -265,20 +265,8 @@ namespace MathGame.GameModes.Balloons
         /// </summary>
         private async UniTaskVoid CountdownAsync(CancellationToken cancellationToken)
         {
-            if (_gameUI != null)
-            {
-                _gameUI.ShowCountdown();
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.CountdownDelay), cancellationToken: cancellationToken);
-                for (int i = 3; i >= 1; i--)
-                {
-                    _gameUI.UpdateCountdownText(i.ToString());
-                    await UniTask.Delay(TimeSpan.FromSeconds(_config.CountdownDelay),
-                        cancellationToken: cancellationToken);
-                }
-
-                _gameUI.HideCountdown();
-            }
-
+            // Убран отсчет 3-2-1, сразу начинаем игру
+            
             // Начинаем новый раунд с текущим вопросом
             if (_roundController != null)
             {
