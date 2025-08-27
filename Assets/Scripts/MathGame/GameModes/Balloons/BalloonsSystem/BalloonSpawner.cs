@@ -49,7 +49,7 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
         #region Public Methods
 
         /// <summary>
-        /// Спавн всех шариков для раунда одновременно
+        /// Спавн всех шариков для раунда волнами по колонкам
         /// </summary>
         public async UniTask SpawnAllBalloons(Question question, CancellationToken cancellationToken)
         {
@@ -64,30 +64,27 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
             try
             {
                 var balloonData = GenerateBalloonData(question);
-
-                for (int i = 0; i < balloonData.Count; i++)
+                var columns = GenerateColumnOrder();
+                
+                Debug.Log($"BalloonSpawner: Начинаем спавн {balloonData.Count} шариков в {_config.SpawnColumns} колонок");
+                
+                int balloonIndex = 0;
+                
+                // Спавним волнами пока есть шарики
+                while (balloonIndex < balloonData.Count && _isSpawning && !cancellationToken.IsCancellationRequested)
                 {
-                    var data = balloonData[i];
+                    // Спавн одной волны шариков
+                    await SpawnWave(balloonData, ref balloonIndex, columns, cancellationToken);
                     
-                    if (cancellationToken.IsCancellationRequested || !_isSpawning)
+                    // Проверяем нужна ли еще одна волна
+                    if (balloonIndex < balloonData.Count && _isSpawning && !cancellationToken.IsCancellationRequested)
                     {
-                        Debug.Log($"BalloonSpawner: Спавн прерван. Токен отменен: {cancellationToken.IsCancellationRequested}, Спавн активен: {_isSpawning}");
-                        return;
-                    }
-
-                    var balloon = CreateBalloon(data, i);
-                    OnBalloonCreated?.Invoke(balloon);
-
-                    Debug.Log($"BalloonSpawner: Создан шарик {data.Answer}, ожидание {_config.SpawnInterval} сек");
-                    await UniTask.WaitForSeconds(_config.SpawnInterval, cancellationToken: cancellationToken);
-                    
-                    // Дополнительная проверка после ожидания
-                    if (cancellationToken.IsCancellationRequested || !_isSpawning)
-                    {
-                        Debug.Log($"BalloonSpawner: Спавн прерван после ожидания. Токен отменен: {cancellationToken.IsCancellationRequested}, Спавн активен: {_isSpawning}");
-                        return;
+                        Debug.Log($"BalloonSpawner: Ожидание {_config.WaveDelay} сек до следующей волны");
+                        await UniTask.WaitForSeconds(_config.WaveDelay, cancellationToken: cancellationToken);
                     }
                 }
+                
+                Debug.Log($"BalloonSpawner: Спавн завершен. Создано {balloonIndex} шариков");
             }
             finally
             {
@@ -191,11 +188,11 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
         }
 
         /// <summary>
-        /// Создать физический шарик
+        /// Создать физический шарик в определенной колонке
         /// </summary>
-        private BalloonAnswer CreateBalloon(BalloonData data, int balloonIndex)
+        private BalloonAnswer CreateBalloon(BalloonData data, int balloonIndex, int columnIndex)
         {
-            var spawnPosition = GetRandomPosition();
+            var spawnPosition = GetColumnPosition(columnIndex);
 
             // Пытаемся загрузить префаб шарика
             var balloonPrefab = Resources.Load<GameObject>(BALLOON_PREFAB_PATH);
@@ -206,7 +203,7 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
             }
             
             var balloonObject = Object.Instantiate(balloonPrefab, _spawnParent);
-            balloonObject.name = $"Balloon_{data.Answer}_{(data.IsCorrect ? "CORRECT" : "WRONG")}";
+            balloonObject.name = $"Balloon_{data.Answer}_{(data.IsCorrect ? "CORRECT" : "WRONG")}_Col{columnIndex}";
             var balloon = balloonObject.GetComponent<BalloonAnswer>();
             balloon.RectTransform.anchoredPosition = spawnPosition;
 
@@ -215,14 +212,76 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
             
             balloon.Initialize(data.Answer, data.IsCorrect, _config.BalloonSpeed, _config, balloonColor);
 
+            Debug.Log($"BalloonSpawner: Создан шарик {data.Answer} в колонке {columnIndex}, позиция: {spawnPosition}");
+
             return balloon;
         }
 
-        private Vector3 GetRandomPosition()
+        /// <summary>
+        /// Спавн одной волны шариков по колонкам
+        /// </summary>
+        private async UniTask SpawnWave(List<BalloonData> balloonData, ref int balloonIndex, List<int> columnOrder, CancellationToken cancellationToken)
         {
-            // Используем настройки отступов из конфига
-            var leftBound = _balloonContainer.rect.xMin - _config.SpawnLeftOffset;
-            var rightBound = _balloonContainer.rect.xMax + _config.SpawnRightOffset;
+            int balloonsInWave = Mathf.Min(_config.SpawnColumns, balloonData.Count - balloonIndex);
+            
+            for (int i = 0; i < balloonsInWave; i++)
+            {
+                if (cancellationToken.IsCancellationRequested || !_isSpawning)
+                {
+                    Debug.Log($"BalloonSpawner: Спавн волны прерван на шарике {i}");
+                    return;
+                }
+                
+                var data = balloonData[balloonIndex];
+                int columnIndex = columnOrder[i % columnOrder.Count];
+                
+                var balloon = CreateBalloon(data, balloonIndex, columnIndex);
+                OnBalloonCreated?.Invoke(balloon);
+                
+                balloonIndex++;
+                
+                // Ждем интервал между колонками (если не последний в волне и интервал > 0)
+                if (i < balloonsInWave - 1 && _config.ColumnSpawnInterval > 0f)
+                {
+                    Debug.Log($"BalloonSpawner: Ожидание {_config.ColumnSpawnInterval} сек до следующей колонки");
+                    await UniTask.WaitForSeconds(_config.ColumnSpawnInterval, cancellationToken: cancellationToken);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Генерирует порядок колонок для спавна
+        /// </summary>
+        private List<int> GenerateColumnOrder()
+        {
+            var columns = new List<int>();
+            
+            for (int i = 0; i < _config.SpawnColumns; i++)
+            {
+                columns.Add(i);
+            }
+            
+            // Если режим случайный - перемешиваем
+            if (_config.ColumnMode == ColumnSpawnMode.Random)
+            {
+                for (int i = columns.Count - 1; i > 0; i--)
+                {
+                    int randomIndex = Random.Range(0, i + 1);
+                    (columns[i], columns[randomIndex]) = (columns[randomIndex], columns[i]);
+                }
+            }
+            
+            return columns;
+        }
+        
+        /// <summary>
+        /// Получить позицию для спавна в определенной колонке
+        /// </summary>
+        private Vector3 GetColumnPosition(int columnIndex)
+        {
+            // Вычисляем границы с учетом отступов
+            var leftBound = _balloonContainer.rect.xMin + _config.SpawnLeftOffset;
+            var rightBound = _balloonContainer.rect.xMax - _config.SpawnRightOffset;
             var bottomBound = _balloonContainer.rect.yMin + _config.SpawnBottomOffset;
             
             // Проверяем валидность зоны спавна
@@ -234,11 +293,16 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
                 rightBound = _balloonContainer.rect.center.x + 50f;
             }
             
-            var randomX = Random.Range(leftBound, rightBound);
+            // Вычисляем ширину одной колонки
+            float totalWidth = rightBound - leftBound;
+            float columnWidth = totalWidth / _config.SpawnColumns;
             
-            Debug.Log($"BalloonSpawner: Спавн позиция X={randomX:F1}, Y={bottomBound:F1}. Границы: L={leftBound:F1}, R={rightBound:F1}");
+            // Вычисляем X позицию для центра колонки
+            float columnCenterX = leftBound + (columnIndex + 0.5f) * columnWidth;
             
-            return new Vector3(randomX, bottomBound, 0);
+            Debug.Log($"BalloonSpawner: Колонка {columnIndex}, позиция X={columnCenterX:F1}, Y={bottomBound:F1}. Границы колонки: {leftBound + columnIndex * columnWidth:F1} - {leftBound + (columnIndex + 1) * columnWidth:F1}");
+            
+            return new Vector3(columnCenterX, bottomBound, 0);
         }
 
         #endregion

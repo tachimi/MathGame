@@ -16,6 +16,18 @@ namespace MathGame.Configs
         [Tooltip("Один цвет для всех неправильных ответов, другой для правильного")]
         Themed = 2
     }
+    
+    /// <summary>
+    /// Режим выбора колонок для спавна
+    /// </summary>
+    public enum ColumnSpawnMode
+    {
+        [Tooltip("Спавн по колонкам по порядку слева направо")]
+        Sequential = 0,
+        
+        [Tooltip("Случайный выбор колонки для спавна")]
+        Random = 1
+    }
     /// <summary>
     /// Конфигурация для игрового режима Balloons
     /// </summary>
@@ -25,7 +37,16 @@ namespace MathGame.Configs
         [Header("Настройки шариков")]
         [field: SerializeField] public int BalloonsCount = 10;
         [field: SerializeField] public float BalloonSpeed = 100f;
-        [field: SerializeField] public float SpawnInterval = 0.8f;
+        
+        [Header("Настройки спавна по колонкам")]
+        [Tooltip("Количество колонок для спавна шариков")]
+        [field: SerializeField] public int SpawnColumns = 3;
+        [Tooltip("Интервал между спавном в колонках (0 = спавн во всех колонках сразу)")]
+        [field: SerializeField] public float ColumnSpawnInterval = 0.5f;
+        [Tooltip("Задержка между волнами спавна")]
+        [field: SerializeField] public float WaveDelay = 1f;
+        [Tooltip("Режим выбора колонок для спавна")]
+        [field: SerializeField] public ColumnSpawnMode ColumnMode = ColumnSpawnMode.Sequential;
         [Tooltip("Палитра цветов для шариков")]
         public Color[] balloonColors = {
             Color.red, Color.blue, Color.green, Color.yellow,
