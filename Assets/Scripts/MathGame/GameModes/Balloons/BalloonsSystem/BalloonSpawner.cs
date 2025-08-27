@@ -298,14 +298,14 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
                 rightBound = _balloonContainer.rect.center.x + 50f;
             }
             
-            // Вычисляем ширину одной колонки
-            float totalWidth = rightBound - leftBound;
-            float columnWidth = totalWidth / _config.SpawnColumns;
+            // Вычисляем ширину одной колонки в доступной области (с учетом отступов)
+            float availableWidth = rightBound - leftBound;
+            float columnWidth = availableWidth / _config.SpawnColumns;
             
             // Вычисляем X позицию для центра колонки
             float columnCenterX = leftBound + (columnIndex + 0.5f) * columnWidth;
             
-            Debug.Log($"BalloonSpawner: Колонка {columnIndex}, позиция X={columnCenterX:F1}, Y={bottomBound:F1}. Границы колонки: {leftBound + columnIndex * columnWidth:F1} - {leftBound + (columnIndex + 1) * columnWidth:F1}");
+            Debug.Log($"BalloonSpawner: Колонка {columnIndex}, позиция X={columnCenterX:F1}, Y={bottomBound:F1}. Доступная ширина: {availableWidth:F1}, отступы L={_config.SpawnLeftOffset}, R={_config.SpawnRightOffset}");
             
             return new Vector3(columnCenterX, bottomBound, 0);
         }
