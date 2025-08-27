@@ -64,15 +64,27 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
             try
             {
                 var balloonData = GenerateBalloonData(question);
-                var columns = GenerateColumnOrder();
                 
-                Debug.Log($"BalloonSpawner: Начинаем спавн {balloonData.Count} шариков в {_config.SpawnColumns} колонок");
+                Debug.Log($"BalloonSpawner: Начинаем спавн {balloonData.Count} шариков в {_config.SpawnColumns} колонок, режим: {_config.ColumnMode}");
                 
                 int balloonIndex = 0;
+                List<int> columns = null;
+                
+                // Генерируем порядок колонок для режимов Sequential и Random
+                if (_config.ColumnMode != ColumnSpawnMode.RandomPerWave)
+                {
+                    columns = GenerateColumnOrder();
+                }
                 
                 // Спавним волнами пока есть шарики
                 while (balloonIndex < balloonData.Count && _isSpawning && !cancellationToken.IsCancellationRequested)
                 {
+                    // Для RandomPerWave генерируем новый порядок каждую волну
+                    if (_config.ColumnMode == ColumnSpawnMode.RandomPerWave)
+                    {
+                        columns = GenerateColumnOrder();
+                    }
+                    
                     // Спавн одной волны шариков
                     int spawned = await SpawnWave(balloonData, balloonIndex, columns, cancellationToken);
                     balloonIndex += spawned;
@@ -266,13 +278,18 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
                 columns.Add(i);
             }
             
-            // Если режим случайный - перемешиваем
-            if (_config.ColumnMode == ColumnSpawnMode.Random)
+            // Если режим случайный (любой Random режим) - перемешиваем
+            if (_config.ColumnMode == ColumnSpawnMode.Random || _config.ColumnMode == ColumnSpawnMode.RandomPerWave)
             {
                 for (int i = columns.Count - 1; i > 0; i--)
                 {
                     int randomIndex = Random.Range(0, i + 1);
                     (columns[i], columns[randomIndex]) = (columns[randomIndex], columns[i]);
+                }
+                
+                if (_config.ColumnMode == ColumnSpawnMode.RandomPerWave)
+                {
+                    Debug.Log($"BalloonSpawner: Новый порядок колонок: [{string.Join(", ", columns)}]");
                 }
             }
             
