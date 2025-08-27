@@ -74,7 +74,8 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
                 while (balloonIndex < balloonData.Count && _isSpawning && !cancellationToken.IsCancellationRequested)
                 {
                     // Спавн одной волны шариков
-                    await SpawnWave(balloonData, ref balloonIndex, columns, cancellationToken);
+                    int spawned = await SpawnWave(balloonData, balloonIndex, columns, cancellationToken);
+                    balloonIndex += spawned;
                     
                     // Проверяем нужна ли еще одна волна
                     if (balloonIndex < balloonData.Count && _isSpawning && !cancellationToken.IsCancellationRequested)
@@ -220,25 +221,27 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
         /// <summary>
         /// Спавн одной волны шариков по колонкам
         /// </summary>
-        private async UniTask SpawnWave(List<BalloonData> balloonData, ref int balloonIndex, List<int> columnOrder, CancellationToken cancellationToken)
+        /// <returns>Количество созданных шариков</returns>
+        private async UniTask<int> SpawnWave(List<BalloonData> balloonData, int startIndex, List<int> columnOrder, CancellationToken cancellationToken)
         {
-            int balloonsInWave = Mathf.Min(_config.SpawnColumns, balloonData.Count - balloonIndex);
+            int balloonsInWave = Mathf.Min(_config.SpawnColumns, balloonData.Count - startIndex);
+            int spawned = 0;
             
             for (int i = 0; i < balloonsInWave; i++)
             {
                 if (cancellationToken.IsCancellationRequested || !_isSpawning)
                 {
                     Debug.Log($"BalloonSpawner: Спавн волны прерван на шарике {i}");
-                    return;
+                    break;
                 }
                 
-                var data = balloonData[balloonIndex];
+                var data = balloonData[startIndex + i];
                 int columnIndex = columnOrder[i % columnOrder.Count];
                 
-                var balloon = CreateBalloon(data, balloonIndex, columnIndex);
+                var balloon = CreateBalloon(data, startIndex + i, columnIndex);
                 OnBalloonCreated?.Invoke(balloon);
                 
-                balloonIndex++;
+                spawned++;
                 
                 // Ждем интервал между колонками (если не последний в волне и интервал > 0)
                 if (i < balloonsInWave - 1 && _config.ColumnSpawnInterval > 0f)
@@ -247,6 +250,8 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
                     await UniTask.WaitForSeconds(_config.ColumnSpawnInterval, cancellationToken: cancellationToken);
                 }
             }
+            
+            return spawned;
         }
         
         /// <summary>
