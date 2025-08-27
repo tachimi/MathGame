@@ -16,21 +16,19 @@ namespace MathGame.UI
         public NumberRange Range => _numberRange;
         public bool IsSelected => _isSelected;
 
-        [Header("UI Components")] [SerializeField]
-        private Button _button;
-
+        [Header("UI Components")]
+        [SerializeField] private Button _button;
         [SerializeField] private TextMeshProUGUI _rangeText;
         [SerializeField] private Image _background;
 
-        [Header("Visual Settings")] [SerializeField]
-        private Color _normalColor = Color.white;
-
-        [SerializeField] private Color _selectedColor = new Color(0.3f, 0.7f, 0.3f, 1f);
-        [SerializeField] private Color _hoveredColor = new Color(0.9f, 0.9f, 0.9f, 1f);
-
+        [Header("Visual Settings")]
+        [SerializeField] private Sprite _normalSprite;
+        [SerializeField] private Sprite _selectedSprite;
+        [SerializeField] private Color _normalTextColor;
+        [SerializeField] private Color _selectedTextColor;
+        
         private NumberRange _numberRange;
         private bool _isSelected;
-        private bool _isHovered;
 
         private void Awake()
         {
@@ -67,34 +65,19 @@ namespace MathGame.UI
         }
 
         /// <summary>
-        /// Установить состояние наведения (для визуализации диапазона при выборе)
-        /// </summary>
-        public void SetHovered(bool hovered)
-        {
-            _isHovered = hovered;
-            UpdateVisualState();
-        }
-
-        /// <summary>
         /// Обновить визуальное состояние
         /// </summary>
         private void UpdateVisualState()
         {
             if (_background != null)
             {
-                Color targetColor = _normalColor;
-                
-                if (_isSelected)
-                    targetColor = _selectedColor;
-                else if (_isHovered)
-                    targetColor = _hoveredColor;
-                    
-                _background.color = targetColor;
+                _background.sprite = _isSelected ? _selectedSprite : _normalSprite;
             }
 
             if (_rangeText != null)
             {
                 _rangeText.fontStyle = _isSelected ? FontStyles.Bold : FontStyles.Normal;
+                _rangeText.color = IsSelected ? _selectedTextColor : _normalTextColor;
             }
         }
 
@@ -105,21 +88,6 @@ namespace MathGame.UI
         {
             if (_numberRange == null) return false;
             return _numberRange.Max <= 20;
-        }
-
-        /// <summary>
-        /// Установить цвет кнопки
-        /// </summary>
-        public void SetButtonColor(Color color)
-        {
-            if (_background != null)
-            {
-                _normalColor = color;
-                if (!_isSelected)
-                {
-                    _background.color = _normalColor;
-                }
-            }
         }
 
         private void OnDestroy()

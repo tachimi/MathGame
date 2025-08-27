@@ -25,7 +25,7 @@ namespace MathGame.Interfaces
         /// </summary>
         /// <param name="settings">Настройки игры</param>
         /// <param name="parentContainer">Родительский контейнер для UI элементов</param>
-        void Initialize(GameSettings settings, Transform parentContainer);
+        void Initialize(GameSettings settings, RectTransform parentContainer);
         
         /// <summary>
         /// Установка нового вопроса

@@ -492,7 +492,6 @@ namespace MathGame.UI.Cards
                 string formattedQuestion =
                     $"{_currentQuestion.FirstNumber}\n{_currentQuestion.GetOperationSymbol()} {_currentQuestion.SecondNumber}";
                 _questionDisplay.text = formattedQuestion;
-                _questionDisplay.color = Color.black;
             }
         }
 
@@ -506,7 +505,6 @@ namespace MathGame.UI.Cards
             if (_inputDisplay != null)
             {
                 _inputDisplay.text = "?";
-                _inputDisplay.color = Color.black;
             }
         }
 

@@ -42,7 +42,7 @@ namespace MathGame.GameModes.Cards
         
         #region IMathGameMode Implementation
         
-        public void Initialize(GameSettings settings, Transform parentContainer)
+        public void Initialize(GameSettings settings, RectTransform parentContainer)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _parentContainer = parentContainer ?? throw new ArgumentNullException(nameof(parentContainer));
@@ -85,8 +85,6 @@ namespace MathGame.GameModes.Cards
             {
                 Debug.LogWarning($"CardGameMode: {_cardFactory.GetMissingPrefabsInfo()}");
             }
-            
-            Debug.Log($"CardGameMode: Инициализирован с настройками - {_settings.GetDescription()}");
         }
         
         public void SetQuestion(Question question)
@@ -110,8 +108,6 @@ namespace MathGame.GameModes.Cards
             _currentCard.OnAnswerSelected += HandleAnswerSelected;
             _currentCard.OnSwipeUp += HandleSwipeUp;
             _currentCard.OnSwipeDown += HandleSwipeDown;
-            
-            Debug.Log($"CardGameMode: Установлен вопрос - {question.GetQuestionDisplay()}");
         }
         
         public void StartRound()
@@ -126,8 +122,6 @@ namespace MathGame.GameModes.Cards
             
             // Карточка уже готова к работе после SetQuestion
             // Базовая карточка автоматически запускает анимацию появления
-            
-            Debug.Log("CardGameMode: Раунд начат");
         }
         
         public void EndRound()
@@ -141,8 +135,6 @@ namespace MathGame.GameModes.Cards
                 _currentCard.OnSwipeUp -= HandleSwipeUp;
                 _currentCard.OnSwipeDown -= HandleSwipeDown;
             }
-            
-            Debug.Log("CardGameMode: Раунд завершен");
         }
         
         public void Cleanup()
@@ -172,8 +164,6 @@ namespace MathGame.GameModes.Cards
             _settings = null;
             _parentContainer = null;
             _cardFactory = null;
-            
-            Debug.Log("CardGameMode: Ресурсы очищены");
         }
         
         #endregion

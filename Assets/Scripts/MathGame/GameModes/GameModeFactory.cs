@@ -1,4 +1,5 @@
 using System;
+using MathGame.Configs;
 using MathGame.Enums;
 using MathGame.GameModes.Balloons;
 using MathGame.GameModes.Cards;
@@ -11,8 +12,18 @@ namespace MathGame.GameModes
     /// <summary>
     /// Фабрика для создания различных игровых режимов
     /// </summary>
-    public static class GameModeFactory
+    public class GameModeFactory
     {
+        private readonly BalloonModeConfig _balloonConfig;
+        
+        /// <summary>
+        /// Конструктор с инжекцией зависимостей
+        /// </summary>
+        public GameModeFactory(BalloonModeConfig balloonConfig = null)
+        {
+            _balloonConfig = balloonConfig;
+        }
+        
         /// <summary>
         /// Создает экземпляр игрового режима на основе типа
         /// </summary>
@@ -20,12 +31,12 @@ namespace MathGame.GameModes
         /// <param name="settings">Настройки игры</param>
         /// <param name="parentContainer">Родительский контейнер для UI</param>
         /// <returns>Экземпляр игрового режима</returns>
-        public static IMathGameMode Create(GameType gameType, GameSettings settings, Transform parentContainer)
+        public IMathGameMode Create(GameType gameType, GameSettings settings, RectTransform parentContainer)
         {
             IMathGameMode gameMode = gameType switch
             {
                 GameType.Cards => new CardGameMode(),
-                GameType.Balloons => new BalloonGameMode(),
+                GameType.Balloons => CreateBalloonMode(),
                 GameType.Grid => throw new NotImplementedException("Grid game mode coming soon!"),
                 _ => throw new ArgumentException($"Unsupported game type: {gameType}")
             };
@@ -34,6 +45,25 @@ namespace MathGame.GameModes
             gameMode.Initialize(settings, parentContainer);
             
             return gameMode;
+        }
+        
+        /// <summary>
+        /// Создает режим Balloons с конфигом
+        /// </summary>
+        private IMathGameMode CreateBalloonMode()
+        {
+            if (_balloonConfig == null)
+            {
+                Debug.LogWarning("BalloonModeConfig not injected! Loading from Resources as fallback...");
+                var config = Resources.Load<BalloonModeConfig>("Configs/BalloonModeConfig");
+                if (config == null)
+                {
+                    throw new InvalidOperationException("BalloonModeConfig not found! Please create one in Resources/Configs/");
+                }
+                return new BalloonGameMode(config);
+            }
+            
+            return new BalloonGameMode(_balloonConfig);
         }
         
         /// <summary>
@@ -46,25 +76,8 @@ namespace MathGame.GameModes
             return gameType switch
             {
                 GameType.Cards => true,
-                GameType.Balloons => true, // Теперь реализован
-                GameType.Grid => false,    // Пока не реализован
+                GameType.Balloons => true,
                 _ => false
-            };
-        }
-        
-        /// <summary>
-        /// Получает отображаемое имя режима игры
-        /// </summary>
-        /// <param name="gameType">Тип игрового режима</param>
-        /// <returns>Отображаемое имя</returns>
-        public static string GetDisplayName(GameType gameType)
-        {
-            return gameType switch
-            {
-                GameType.Cards => "Карточки",
-                GameType.Balloons => "Шарики",
-                GameType.Grid => "Сетка",
-                _ => "Неизвестный режим"
             };
         }
     }

@@ -103,7 +103,10 @@ namespace MathGame.Settings
         public static GameSettings CreateWithGlobalSettings()
         {
             var globalSettings = Core.GlobalSettingsManager.LoadGlobalSettings();
-            return new GameSettings(globalSettings.Difficulty, globalSettings.QuestionsCount, globalSettings.AnswerMode);
+            return new GameSettings(globalSettings.Difficulty, globalSettings.QuestionsCount, globalSettings.AnswerMode)
+            {
+                GameType = globalSettings.GameType
+            };
         }
         
         /// <summary>

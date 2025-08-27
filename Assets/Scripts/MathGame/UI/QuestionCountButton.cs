@@ -10,49 +10,38 @@ namespace MathGame.UI
     /// </summary>
     public class QuestionCountButton : MonoBehaviour
     {
-        [Header("UI Components")] [SerializeField]
-        private Button _button;
-
+        public event Action<QuestionCountButton> OnQuestionCountSelected;
+        
+        public int QuestionCount => _questionCount;
+        public bool IsSelected { get; private set; }
+        
+        [Header("UI Components")]
+        [SerializeField] private Button _button;
         [SerializeField] private TextMeshProUGUI _buttonText;
         [SerializeField] private Image _background;
 
-        [Header("Visual Settings")] [SerializeField]
-        private Color _normalColor = Color.white;
-
-        [SerializeField] private Color _selectedColor = new Color(0.3f, 0.7f, 0.3f, 1f);
-
-        [Header("Question Count Data")] [SerializeField]
-        private int _questionCount = 10;
-
-        [SerializeField] private string _displayText;
-        [SerializeField] private string _description;
-
-        public event Action<QuestionCountButton> OnQuestionCountSelected;
-
-        public int QuestionCount => _questionCount;
-        public string DisplayText => _displayText;
-        public string Description => _description;
-        public bool IsSelected { get; private set; }
+        [Header("Visual Settings")]
+        [SerializeField] private Sprite _normalSprite;
+        [SerializeField] private Sprite _selectedSprite;
+        [SerializeField] private Color _normalTextColor;
+        [SerializeField] private Color _selectedTextColor;
+        
+        [Header("Question Count Data")]
+        [SerializeField] private int _questionCount = 10;
 
         private void Awake()
         {
             _button.onClick.AddListener(OnButtonClicked);
         }
 
+        private void OnValidate()
+        {
+            UpdateDisplayText();
+        }
+
         private void OnButtonClicked()
         {
             OnQuestionCountSelected?.Invoke(this);
-        }
-
-        /// <summary>
-        /// Настройка кнопки с данными количества вопросов
-        /// </summary>
-        public void Configure(int questionCount, string displayText = "", string description = "")
-        {
-            _questionCount = questionCount;
-            _displayText = string.IsNullOrEmpty(displayText) ? questionCount.ToString() : displayText;
-            _description = string.IsNullOrEmpty(description) ? $"{questionCount} вопросов" : description;
-            UpdateDisplayText();
         }
 
         /// <summary>
@@ -66,9 +55,9 @@ namespace MathGame.UI
 
         private void UpdateDisplayText()
         {
-            if (_buttonText != null && !string.IsNullOrEmpty(_displayText))
+            if (_buttonText != null)
             {
-                _buttonText.text = _displayText;
+                _buttonText.text = _questionCount.ToString();
             }
         }
 
@@ -76,30 +65,15 @@ namespace MathGame.UI
         {
             if (_background != null)
             {
-                _background.color = IsSelected ? _selectedColor : _normalColor;
+                _background.sprite = IsSelected ? _selectedSprite : _normalSprite;
             }
 
             // Можно добавить дополнительные визуальные эффекты
             if (_buttonText != null)
             {
                 _buttonText.fontStyle = IsSelected ? FontStyles.Bold : FontStyles.Normal;
+                _buttonText.color = IsSelected ? _selectedTextColor : _normalTextColor;
             }
-        }
-
-        /// <summary>
-        /// Получить полное описание с количеством вопросов
-        /// </summary>
-        public string GetFullDescription()
-        {
-            return !string.IsNullOrEmpty(_description) ? _description : $"{_questionCount} вопросов";
-        }
-
-        /// <summary>
-        /// Проверить, является ли это количество рекомендуемым для новичков
-        /// </summary>
-        public bool IsRecommendedForBeginners()
-        {
-            return _questionCount >= 5 && _questionCount <= 15;
         }
 
         /// <summary>
@@ -115,37 +89,6 @@ namespace MathGame.UI
         {
             if (_button != null)
                 _button.onClick.RemoveAllListeners();
-        }
-
-        // Методы для настройки в Inspector'е
-        [ContextMenu("Configure 5 Questions")]
-        private void Configure5()
-        {
-            Configure(5, "5", "Быстрая игра");
-        }
-
-        [ContextMenu("Configure 10 Questions")]
-        private void Configure10()
-        {
-            Configure(10, "10", "Стандартная игра");
-        }
-
-        [ContextMenu("Configure 15 Questions")]
-        private void Configure15()
-        {
-            Configure(15, "15", "Средняя игра");
-        }
-
-        [ContextMenu("Configure 20 Questions")]
-        private void Configure20()
-        {
-            Configure(20, "20", "Длинная игра");
-        }
-
-        [ContextMenu("Configure 30 Questions")]
-        private void Configure30()
-        {
-            Configure(30, "30", "Марафон");
         }
     }
 }

@@ -160,8 +160,8 @@ namespace MathGame.UI
 
         private void OnBackClicked()
         {
-            CloseScreen();
             ScreensManager.OpenScreen<MainMenuScreen>();
+            CloseScreen();
         }
 
         protected override void OnDestroy()

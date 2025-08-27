@@ -13,20 +13,13 @@ namespace MathGame.UI
     [RequireComponent(typeof(Button))]
     public class KeypadButton : MonoBehaviour
     {
-        [Header("Button Configuration")] [SerializeField]
-        private KeypadButtonType _buttonType = KeypadButtonType.Number;
-
+        [Header("Button Configuration")]
+        [SerializeField] private KeypadButtonType _buttonType = KeypadButtonType.Number;
         [SerializeField] private int _numberValue = 0; // Используется только для Number типа
 
-        [Header("UI References")] [SerializeField]
-        private TextMeshProUGUI _buttonText;
-
+        [Header("UI References")]
+        [SerializeField] private TextMeshProUGUI _buttonText;
         [SerializeField] private Image _buttonImage;
-
-        [Header("Visual Settings")] [SerializeField]
-        private Color _normalColor = Color.white;
-
-        [SerializeField] private Color _disabledColor = Color.gray;
 
         private Button _button;
 
@@ -100,11 +93,6 @@ namespace MathGame.UI
         public void SetInteractable(bool interactable)
         {
             _button.interactable = interactable;
-
-            if (_buttonImage != null)
-            {
-                _buttonImage.color = interactable ? _normalColor : _disabledColor;
-            }
         }
 
         /// <summary>
@@ -116,21 +104,6 @@ namespace MathGame.UI
             {
                 KeypadButtonType.Number => _numberValue.ToString(),
                 _ => ""
-            };
-        }
-
-        /// <summary>
-        /// Получить описание кнопки для отладки
-        /// </summary>
-        public string GetDescription()
-        {
-            return _buttonType switch
-            {
-                KeypadButtonType.Number => $"Число {_numberValue}",
-                KeypadButtonType.Delete => "Удалить символ",
-                KeypadButtonType.Clear => "Очистить ввод",
-                KeypadButtonType.Submit => "Подтвердить ответ",
-                _ => "Неизвестная кнопка"
             };
         }
 

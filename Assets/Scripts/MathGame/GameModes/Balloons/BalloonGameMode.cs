@@ -1,6 +1,8 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using MathGame.Configs;
+using MathGame.GameModes.Balloons.BalloonsSystem;
 using MathGame.Interfaces;
 using MathGame.Models;
 using MathGame.Settings;
@@ -17,82 +19,71 @@ namespace MathGame.GameModes.Balloons
     public class BalloonGameMode : IMathGameMode
     {
         #region Events
-        
+
         public event Action<int> OnAnswerSelected;
         public event Action OnRoundComplete;
-        
+
         #endregion
-        
+
         #region Properties
-        
+
         public bool IsRoundComplete { get; private set; }
         public Question CurrentQuestion { get; private set; }
-        
+
         #endregion
-        
+
         #region Private Fields
-        
-        private GameSettings _settings;
-        private Transform _parentContainer;
+
+        private RectTransform _parentContainer;
+        private RectTransform _balloonsContainer;
         private GameObject _uiPrefabInstance;
         private BalloonGameUI _gameUI;
-        private List<BalloonAnswer> _currentBalloons;
-        private bool _isAnswered;
-        private MonoBehaviour _coroutineRunner;
-        
-        // Пути к префабам
+        private BalloonModeConfig _config;
+        private CancellationTokenSource _cancellationTokenSource;
+        private int _currentRoundNumber = 0;
+
+        private BalloonSpawner _spawner;
+        private BalloonRoundController _roundController;
+        private BalloonFeedbackManager _feedbackManager;
+        private bool _isRoundInProgress;
+
         private const string BALLOONS_UI_PREFAB_PATH = "GameModes/BalloonsUI";
-        private const string BALLOON_PREFAB_PATH = "GameModes/BalloonAnswer";
-        
-        // Настройки полета шариков
-        private readonly float _balloonSpeed = 100f; // пикселей в секунду
-        private readonly float _spawnInterval = 0.8f; // интервал между шариками
-        private readonly float _balloonLifetime = 8f; // время жизни шарика
-        private readonly int _maxBalloonsOnScreen = 6; // максимум шариков одновременно
-        
-        #endregion
-        
-        #region IMathGameMode Implementation
-        
-        public void Initialize(GameSettings settings, Transform parentContainer)
+
+        public BalloonGameMode(BalloonModeConfig config)
         {
-            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+        }
+
+        #endregion
+
+        #region IMathGameMode Implementation
+
+        public void Initialize(GameSettings settings, RectTransform parentContainer)
+        {
             _parentContainer = parentContainer ?? throw new ArgumentNullException(nameof(parentContainer));
-            
-            // Нужен MonoBehaviour для корутин
-            _coroutineRunner = _parentContainer.GetComponent<MonoBehaviour>();
-            if (_coroutineRunner == null)
-            {
-                Debug.LogError("BalloonGameMode: Родительский контейнер должен содержать MonoBehaviour для корутин!");
-                return;
-            }
-            
-            _currentBalloons = new List<BalloonAnswer>();
-            
-            // Создаем UI для игры с шариками
+
+            _cancellationTokenSource = new CancellationTokenSource();
+
             CreateGameUI();
-            
-            Debug.Log($"BalloonGameMode: Инициализирован с настройками - {_settings.GetDescription()}");
+            InitializeComponents();
         }
         
+
         public void SetQuestion(Question question)
         {
             CurrentQuestion = question ?? throw new ArgumentNullException(nameof(question));
             IsRoundComplete = false;
-            _isAnswered = false;
-            
-            // Очищаем предыдущие шарики
-            ClearAllBalloons();
-            
+            _isRoundInProgress = false;
+
             // Обновляем UI с новым вопросом
             if (_gameUI != null)
             {
                 _gameUI.SetQuestion(question);
             }
-            
-            Debug.Log($"BalloonGameMode: Установлен вопрос - {question.GetQuestionDisplay()}");
+
+            Debug.Log($"BalloonGameMode: Установлен вопрос - {question.GetQuestionDisplay()}, RoundComplete: {IsRoundComplete}, InProgress: {_isRoundInProgress}");
         }
-        
+
         public void StartRound()
         {
             if (CurrentQuestion == null)
@@ -101,40 +92,64 @@ namespace MathGame.GameModes.Balloons
                 return;
             }
             
-            IsRoundComplete = false;
-            _isAnswered = false;
+            if (_isRoundInProgress)
+            {
+                Debug.LogWarning("BalloonGameMode: Попытка начать раунд во время активного раунда");
+                return;
+            }
             
-            // Показываем UI и начинаем запуск шариков
+            IsRoundComplete = false;
+            _isRoundInProgress = true;
+            _currentRoundNumber++;
+            
+            Debug.Log($"BalloonGameMode: Начинаем раунд #{_currentRoundNumber}, RoundComplete: {IsRoundComplete}, InProgress: {_isRoundInProgress}");
+            
+            // Сбрасываем состояние контроллера раунда для нового раунда
+            if (_roundController != null)
+            {
+                Debug.Log("BalloonGameMode: Завершаем предыдущий раунд контроллера");
+                _roundController.EndRound();
+            }
+
+            if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
+            {
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = new CancellationTokenSource();
+            }
+
+            // Показываем UI
             if (_gameUI != null)
             {
                 _gameUI.ShowGameUI();
             }
-            
-            // Запускаем корутину появления шариков
-            if (_coroutineRunner != null)
-            {
-                _coroutineRunner.StartCoroutine(SpawnBalloonsCoroutine());
-            }
-            
-            Debug.Log("BalloonGameMode: Раунд начат");
+
+            // Запускаем отсчет перед началом игры
+            CountdownAsync(_cancellationTokenSource.Token).Forget();
+
+            Debug.Log("BalloonGameMode: Раунд начат, запуск отсчета");
         }
-        
+
         public void EndRound()
         {
+            if (!_isRoundInProgress) return;
+
             IsRoundComplete = true;
+            _isRoundInProgress = false;
+
+            // Отменяем все асинхронные задачи
+            _cancellationTokenSource?.Cancel();
+
+            // Завершаем работу компонентов
+            _roundController?.EndRound();
+            _spawner?.StopSpawning();
+            _feedbackManager?.HideAllFeedback();
             
-            // Останавливаем все корутины
-            if (_coroutineRunner != null)
-            {
-                _coroutineRunner.StopAllCoroutines();
-            }
-            
-            // Очищаем шарики
+            // Очищаем все шарики
             ClearAllBalloons();
-            
-            Debug.Log("BalloonGameMode: Раунд завершен");
+
+            Debug.Log("BalloonGameMode: Раунд завершен, шарики очищены");
         }
-        
+
         public void Cleanup()
         {
             // Завершаем раунд если он активен
@@ -142,7 +157,10 @@ namespace MathGame.GameModes.Balloons
             {
                 EndRound();
             }
-            
+
+            _roundController?.Cleanup();
+            _feedbackManager?.Cleanup();
+
             // Уничтожаем экземпляр префаба UI
             if (_uiPrefabInstance != null)
             {
@@ -154,255 +172,219 @@ namespace MathGame.GameModes.Balloons
                 // Если UI был создан программно
                 Object.Destroy(_gameUI.gameObject);
             }
-            
+
             _gameUI = null;
-            
+
             // Очищаем все ссылки
-            _currentBalloons?.Clear();
-            _currentBalloons = null;
             CurrentQuestion = null;
-            _settings = null;
             _parentContainer = null;
-            _coroutineRunner = null;
-            
+            _spawner = null;
+            _roundController = null;
+            _feedbackManager = null;
+
+            // Очищаем токен отмены
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+
             Debug.Log("BalloonGameMode: Ресурсы очищены");
         }
-        
+
         #endregion
-        
+
         #region Private Methods
-        
+
         /// <summary>
         /// Создать UI для игры с шариками
         /// </summary>
         private void CreateGameUI()
         {
-            // Загружаем префаб UI для режима шариков
             var uiPrefab = Resources.Load<GameObject>(BALLOONS_UI_PREFAB_PATH);
-            
+
             if (uiPrefab == null)
             {
-                Debug.LogWarning($"BalloonGameMode: Префаб не найден по пути Resources/{BALLOONS_UI_PREFAB_PATH}. " +
-                                "Создаем UI программно как fallback.");
-                
-                // Fallback - создаем программно
-                var gameUIObject = new GameObject("BalloonGameUI");
-                gameUIObject.transform.SetParent(_parentContainer, false);
-                
-                _gameUI = gameUIObject.AddComponent<BalloonGameUI>();
-                _gameUI.Initialize();
+                Debug.LogError($"BalloonGameMode: Префаб не найден по пути Resources/{BALLOONS_UI_PREFAB_PATH}");
+                return;
             }
-            else
+
+            _uiPrefabInstance = Object.Instantiate(uiPrefab, _parentContainer);
+            _gameUI = _uiPrefabInstance.GetComponent<BalloonGameUI>();
+            _gameUI.Initialize();
+            
+            // Получаем контейнер для спавна шариков из UI
+            _balloonsContainer = _gameUI.GetBalloonsContainer();
+            
+            if (_balloonsContainer == null)
             {
-                // Создаем экземпляр префаба
-                _uiPrefabInstance = Object.Instantiate(uiPrefab, _parentContainer);
-                _uiPrefabInstance.name = "BalloonsGameUI";
-                
-                // Получаем BalloonGameUI компонент
-                _gameUI = _uiPrefabInstance.GetComponent<BalloonGameUI>();
-                
-                if (_gameUI == null)
-                {
-                    Debug.LogError($"BalloonGameMode: Префаб {BALLOONS_UI_PREFAB_PATH} не содержит BalloonGameUI компонент!");
-                    
-                    // Добавляем компонент если его нет
-                    _gameUI = _uiPrefabInstance.AddComponent<BalloonGameUI>();
-                }
-                
-                _gameUI.Initialize();
+                Debug.LogWarning("BalloonGameMode: BalloonGameUI не предоставил BalloonsContainer, используем основной контейнер");
+                _balloonsContainer = _parentContainer;
             }
             
-            Debug.Log("BalloonGameMode: UI создан");
+            Debug.Log($"BalloonGameMode: UI создан, контейнер для спавна: {_balloonsContainer.name}");
         }
-        
+
         /// <summary>
-        /// Корутина появления шариков
+        /// Инициализация компонентов новой архитектуры
         /// </summary>
-        private IEnumerator SpawnBalloonsCoroutine()
+        private void InitializeComponents()
         {
-            if (CurrentQuestion == null) yield break;
-            
-            // Получаем все возможные ответы (правильный + неправильные)
-            var allAnswers = GenerateAnswerOptions();
-            int currentAnswerIndex = 0;
-            
-            while (!IsRoundComplete && !_isAnswered)
+            if (_balloonsContainer == null)
             {
-                // Проверяем, не слишком ли много шариков на экране
-                CleanupDestroyedBalloons();
-                
-                if (_currentBalloons.Count < _maxBalloonsOnScreen && currentAnswerIndex < allAnswers.Count)
-                {
-                    // Создаем новый шарик
-                    var balloon = CreateBalloon(allAnswers[currentAnswerIndex]);
-                    if (balloon != null)
-                    {
-                        _currentBalloons.Add(balloon);
-                        currentAnswerIndex++;
-                    }
-                }
-                
-                // Если закончились ответы, начинаем сначала (но правильный ответ появляется только раз)
-                if (currentAnswerIndex >= allAnswers.Count)
-                {
-                    currentAnswerIndex = 1; // Пропускаем правильный ответ (индекс 0)
-                }
-                
-                yield return new WaitForSeconds(_spawnInterval);
+                Debug.LogError("BalloonGameMode: BalloonsContainer не установлен! Проверьте BalloonGameUI.");
+                return;
             }
+
+            // Создаем спавнер с контейнером из UI
+            _spawner = new BalloonSpawner(_config, _balloonsContainer);
+            _spawner.OnBalloonCreated += HandleBalloonCreated;
+
+            // Создаем контроллер раунда
+            _roundController = new BalloonRoundController(_config);
+            _roundController.OnCorrectAnswerSelected += HandleCorrectAnswerSelected;
+            _roundController.OnWrongAnswerSelected += HandleWrongAnswerSelected;
+            _roundController.OnRoundLost += HandleRoundLost;
+            _roundController.OnRoundComplete += HandleRoundComplete;
+
+            // Создаем менеджер обратной связи
+            var feedbackConfig = _config.FeedbackConfig ?? Resources.Load<BalloonFeedbackConfig>("Configs/BalloonFeedbackConfig");
+            if (feedbackConfig == null)
+            {
+                Debug.LogError("BalloonGameMode: BalloonFeedbackConfig не найден! Создайте конфиг в Resources/Configs/");
+                return;
+            }
+            
+            _feedbackManager = new BalloonFeedbackManager(_config, feedbackConfig, _gameUI?.transform ?? _parentContainer);
+            _feedbackManager.OnFeedbackComplete += HandleFeedbackComplete;
+            
+            Debug.Log($"BalloonGameMode: Компоненты инициализированы, спавн в: {_balloonsContainer.name}");
         }
         
+
         /// <summary>
-        /// Генерировать варианты ответов (правильный + неправильные)
+        /// Отсчет перед началом игры
         /// </summary>
-        private List<int> GenerateAnswerOptions()
+        private async UniTaskVoid CountdownAsync(CancellationToken cancellationToken)
         {
-            var answers = new List<int> { CurrentQuestion.CorrectAnswer };
-            
-            // Добавляем неправильные ответы
-            var random = new System.Random();
-            for (int i = 0; i < 8; i++) // Генерируем больше неправильных ответов для разнообразия
+            if (_gameUI != null)
             {
-                int wrongAnswer;
-                do
+                _gameUI.ShowCountdown();
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.CountdownDelay), cancellationToken: cancellationToken);
+                for (int i = 3; i >= 1; i--)
                 {
-                    wrongAnswer = CurrentQuestion.CorrectAnswer + random.Next(-10, 11);
-                } while (wrongAnswer == CurrentQuestion.CorrectAnswer || answers.Contains(wrongAnswer) || wrongAnswer < 0);
-                
-                answers.Add(wrongAnswer);
-            }
-            
-            return answers;
-        }
-        
-        /// <summary>
-        /// Создать шарик с ответом
-        /// </summary>
-        private BalloonAnswer CreateBalloon(int answer)
-        {
-            GameObject balloonObject;
-            BalloonAnswer balloon;
-            
-            // Пытаемся загрузить префаб шарика
-            var balloonPrefab = Resources.Load<GameObject>(BALLOON_PREFAB_PATH);
-            
-            if (balloonPrefab != null)
-            {
-                // Создаем из префаба
-                balloonObject = Object.Instantiate(balloonPrefab, _gameUI != null ? _gameUI.transform : _parentContainer);
-                balloonObject.name = $"Balloon_{answer}";
-                
-                balloon = balloonObject.GetComponent<BalloonAnswer>();
-                
-                if (balloon == null)
-                {
-                    balloon = balloonObject.AddComponent<BalloonAnswer>();
+                    _gameUI.UpdateCountdownText(i.ToString());
+                    await UniTask.Delay(TimeSpan.FromSeconds(_config.CountdownDelay),
+                        cancellationToken: cancellationToken);
                 }
+
+                _gameUI.HideCountdown();
             }
-            else
+
+            // Начинаем новый раунд с текущим вопросом
+            if (_roundController != null)
             {
-                // Fallback - создаем программно
-                balloonObject = new GameObject($"Balloon_{answer}");
-                balloonObject.transform.SetParent(_gameUI != null ? _gameUI.transform : _parentContainer, false);
-                balloon = balloonObject.AddComponent<BalloonAnswer>();
+                Debug.Log("BalloonGameMode: Запускаем новый раунд в контроллере");
+                _roundController.StartRound(CurrentQuestion);
             }
             
-            // Инициализируем шарик
-            balloon.Initialize(answer, CurrentQuestion.CorrectAnswer == answer, _balloonSpeed, _balloonLifetime);
+            // Спавним шарики для этого раунда
+            if (_spawner != null)
+            {
+                Debug.Log("BalloonGameMode: Начинаем спавн шариков");
+                _spawner.SpawnAllBalloons(CurrentQuestion, cancellationToken).Forget();
+            }
             
-            // Подписываемся на события шарика
-            balloon.OnBalloonTapped += OnBalloonTapped;
-            balloon.OnBalloonDestroyed += OnBalloonDestroyed;
+            Debug.Log($"BalloonGameMode: Начат раунд #{_currentRoundNumber} с вопросом {CurrentQuestion.GetQuestionDisplay()}");
+        }
+
+        #endregion
+
+        #region Event Handlers для новой архитектуры
+
+        /// <summary>
+        /// Обработчик создания нового шарика
+        /// </summary>
+        private void HandleBalloonCreated(BalloonAnswer balloon)
+        {
+            Debug.Log($"BalloonGameMode: Регистрируем шарик с ответом {balloon.Answer}, правильный: {balloon.IsCorrectAnswer}");
+            _roundController?.RegisterBalloon(balloon);
+        }
+
+        /// <summary>
+        /// Обработчик выбора правильного ответа
+        /// </summary>
+        private void HandleCorrectAnswerSelected(int answer)
+        {
+            // Останавливаем спавн новых шариков
+            _spawner?.StopSpawning();
+            Debug.Log("BalloonGameMode: Остановлен спавн шариков - правильный ответ выбран");
             
-            return balloon;
+            _feedbackManager?.ShowCorrectAnswerFeedback(answer, _cancellationTokenSource.Token).Forget();
+            OnAnswerSelected?.Invoke(answer);
+        }
+
+        /// <summary>
+        /// Обработчик выбора неправильного ответа
+        /// </summary>
+        private void HandleWrongAnswerSelected(int selectedAnswer)
+        {
+            // Останавливаем спавн новых шариков
+            _spawner?.StopSpawning();
+            Debug.Log("BalloonGameMode: Остановлен спавн шариков - неправильный ответ выбран");
+            
+            var correctAnswer = _roundController?.GetCorrectAnswer() ?? CurrentQuestion.CorrectAnswer;
+            _feedbackManager?.ShowWrongAnswerFeedback(selectedAnswer, correctAnswer, _cancellationTokenSource.Token)
+                .Forget();
+            OnAnswerSelected?.Invoke(selectedAnswer);
+        }
+
+        /// <summary>
+        /// Обработчик проигрыша раунда
+        /// </summary>
+        private void HandleRoundLost()
+        {
+            // Останавливаем спавн новых шариков
+            _spawner?.StopSpawning();
+            Debug.Log("BalloonGameMode: Остановлен спавн шариков - раунд проигран");
+            
+            var correctAnswer = _roundController?.GetCorrectAnswer() ?? CurrentQuestion.CorrectAnswer;
+            _feedbackManager?.ShowRoundLostFeedback(correctAnswer, _cancellationTokenSource.Token).Forget();
+            OnAnswerSelected?.Invoke(-1);
+        }
+
+        /// <summary>
+        /// Обработчик завершения раунда
+        /// </summary>
+        private void HandleRoundComplete()
+        {
+            // Ждем завершения всех анимаций и обратной связи
+            // OnRoundComplete будет вызван в HandleFeedbackComplete
+        }
+
+        /// <summary>
+        /// Обработчик завершения показа обратной связи
+        /// </summary>
+        private void HandleFeedbackComplete()
+        {
+            // Очищаем все шарики перед завершением раунда
+            ClearAllBalloons();
+            
+            IsRoundComplete = true;
+            _isRoundInProgress = false;
+
+            OnRoundComplete?.Invoke();
         }
         
         /// <summary>
-        /// Очистить все шарики
+        /// Очистить все активные шарики
         /// </summary>
         private void ClearAllBalloons()
         {
-            if (_currentBalloons == null) return;
+            // Используем spawner для очистки
+            _spawner?.ClearAllBalloons();
             
-            for (int i = _currentBalloons.Count - 1; i >= 0; i--)
-            {
-                if (_currentBalloons[i] != null)
-                {
-                    Object.Destroy(_currentBalloons[i].gameObject);
-                }
-            }
-            
-            _currentBalloons.Clear();
+            Debug.Log("BalloonGameMode: Шарики очищены через spawner");
         }
-        
-        /// <summary>
-        /// Очистить уничтоженные шарики из списка
-        /// </summary>
-        private void CleanupDestroyedBalloons()
-        {
-            if (_currentBalloons == null) return;
-            
-            for (int i = _currentBalloons.Count - 1; i >= 0; i--)
-            {
-                if (_currentBalloons[i] == null)
-                {
-                    _currentBalloons.RemoveAt(i);
-                }
-            }
-        }
-        
-        #endregion
-        
-        #region Event Handlers
-        
-        /// <summary>
-        /// Обработчик нажатия на шарик
-        /// </summary>
-        private void OnBalloonTapped(BalloonAnswer balloon, int answer, bool isCorrect)
-        {
-            if (_isAnswered) return;
-            
-            _isAnswered = true;
-            
-            Debug.Log($"BalloonGameMode: Шарик нажат - ответ {answer}, правильный: {isCorrect}");
-            
-            // Анимация лопания шарика
-            balloon.PlayPopAnimation();
-            
-            // Передаем ответ дальше
-            OnAnswerSelected?.Invoke(answer);
-            
-            // Ждем немного и завершаем раунд
-            if (_coroutineRunner != null)
-            {
-                _coroutineRunner.StartCoroutine(CompleteRoundAfterDelay(1.5f));
-            }
-        }
-        
-        /// <summary>
-        /// Обработчик уничтожения шарика
-        /// </summary>
-        private void OnBalloonDestroyed(BalloonAnswer balloon)
-        {
-            if (_currentBalloons != null && _currentBalloons.Contains(balloon))
-            {
-                _currentBalloons.Remove(balloon);
-            }
-        }
-        
-        /// <summary>
-        /// Завершить раунд с задержкой
-        /// </summary>
-        private IEnumerator CompleteRoundAfterDelay(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            
-            if (!IsRoundComplete)
-            {
-                OnRoundComplete?.Invoke();
-            }
-        }
-        
+
         #endregion
     }
 }

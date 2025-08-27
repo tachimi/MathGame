@@ -25,7 +25,7 @@ namespace MathGame.UI
         
         [Header("Buttons")]
         [SerializeField] private Button _restartButton;
-        [SerializeField] private Button _menuButton;
+        [SerializeField] private Button _homeButton;
         
         private GameSessionResult _sessionResult;
         
@@ -121,9 +121,9 @@ namespace MathGame.UI
                 _restartButton.onClick.AddListener(OnRestartClicked);
             }
             
-            if (_menuButton != null)
+            if (_homeButton != null)
             {
-                _menuButton.onClick.AddListener(OnMenuClicked);
+                _homeButton.onClick.AddListener(OnMenuClicked);
             }
         }
         
@@ -180,8 +180,8 @@ namespace MathGame.UI
             if (_restartButton != null)
                 _restartButton.onClick.RemoveAllListeners();
                 
-            if (_menuButton != null)
-                _menuButton.onClick.RemoveAllListeners();
+            if (_homeButton != null)
+                _homeButton.onClick.RemoveAllListeners();
         }
     }
 }

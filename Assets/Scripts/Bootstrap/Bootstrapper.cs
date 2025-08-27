@@ -1,3 +1,5 @@
+using Bootstrap.Configs;
+using Bootstrap.Steps;
 using Bootstrap.Steps.Interfaces;
 using MathGame.UI;
 using ScreenManager.Core;
@@ -15,10 +17,11 @@ namespace Bootstrap
         private IBootstrapStep[] _bootstrapSteps;
 
         [Inject]
-        private void Construct()
+        private void Construct(ProjectSettingsConfig  projectSettingsConfig)
         {
             _bootstrapSteps = new IBootstrapStep[]
             {
+                new ProjectSettingsInitializeStep(projectSettingsConfig)
             };
         }
 

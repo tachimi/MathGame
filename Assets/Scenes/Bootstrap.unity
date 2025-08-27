@@ -385,6 +385,7 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
+  _projectSettingsConfig: {fileID: 11400000, guid: e68917ed1a8372e4fae237f933076ce1, type: 2}
 --- !u!4 &1821740138
 Transform:
   m_ObjectHideFlags: 0

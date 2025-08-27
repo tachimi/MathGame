@@ -11,29 +11,23 @@ namespace MathGame.UI
     /// </summary>
     public class AnswerModeButton : MonoBehaviour
     {
-        [Header("UI Components")] [SerializeField]
-        private Button _button;
-
+        public event Action<AnswerModeButton> OnAnswerModeSelected;
+        public AnswerMode AnswerMode => _answerMode;
+        public bool IsSelected { get; private set; }
+        
+        [Header("UI Components")]
+        [SerializeField] private Button _button;
         [SerializeField] private TextMeshProUGUI _buttonText;
         [SerializeField] private Image _background;
 
-        [Header("Visual Settings")] [SerializeField]
-        private Color _normalColor = Color.white;
-
-        [SerializeField] private Color _selectedColor = new Color(0.3f, 0.7f, 0.3f, 1f);
-
-        [Header("Answer Mode Data")] [SerializeField]
-        private AnswerMode _answerMode;
-
-        [SerializeField] private string _displayText;
-        [SerializeField] private string _description;
-
-        public event Action<AnswerModeButton> OnAnswerModeSelected;
-
-        public AnswerMode AnswerMode => _answerMode;
-        public string DisplayText => _displayText;
-        public string Description => _description;
-        public bool IsSelected { get; private set; }
+        [Header("Visual Settings")]
+        [SerializeField] private Sprite _normalSprite;
+        [SerializeField] private Sprite _selectedSprite;
+        [SerializeField] private Color _normalTextColor;
+        [SerializeField] private Color _selectedTextColor;
+        
+        [Header("Answer Mode Data")]
+        [SerializeField] private AnswerMode _answerMode;
 
         private void Awake()
         {
@@ -46,17 +40,6 @@ namespace MathGame.UI
         }
 
         /// <summary>
-        /// Настройка кнопки с данными режима ответа
-        /// </summary>
-        public void Configure(AnswerMode answerMode, string displayText, string description = "")
-        {
-            _answerMode = answerMode;
-            _displayText = displayText;
-            _description = description;
-            UpdateDisplayText();
-        }
-
-        /// <summary>
         /// Установить состояние выбора
         /// </summary>
         public void SetSelected(bool selected)
@@ -65,25 +48,18 @@ namespace MathGame.UI
             UpdateVisualState();
         }
 
-        private void UpdateDisplayText()
-        {
-            if (_buttonText != null && !string.IsNullOrEmpty(_displayText))
-            {
-                _buttonText.text = _displayText;
-            }
-        }
-
         private void UpdateVisualState()
         {
             if (_background != null)
             {
-                _background.color = IsSelected ? _selectedColor : _normalColor;
+                _background.sprite = IsSelected ? _selectedSprite : _normalSprite;
             }
-
+            
             // Можно добавить дополнительные визуальные эффекты
             if (_buttonText != null)
             {
                 _buttonText.fontStyle = IsSelected ? FontStyles.Bold : FontStyles.Normal;
+                _buttonText.color = IsSelected ? _selectedTextColor : _normalTextColor;
             }
         }
 

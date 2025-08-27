@@ -13,13 +13,15 @@ namespace MathGame.Core
         private const string DIFFICULTY_KEY = "MathGame_Difficulty";
         private const string QUESTIONS_COUNT_KEY = "MathGame_QuestionsCount";
         private const string ANSWER_MODE_KEY = "MathGame_AnswerMode";
+        private const string GAME_TYPE_KEY = "MathGame_GameType";
 
         // Дефолтные значения настроек
         private static readonly GameSettings DefaultSettings = new GameSettings
         {
             Difficulty = DifficultyLevel.Easy,
             QuestionsCount = 5,
-            AnswerMode = AnswerMode.MultipleChoice
+            AnswerMode = AnswerMode.MultipleChoice,
+            GameType = GameType.Cards
         };
 
         /// <summary>
@@ -37,17 +39,22 @@ namespace MathGame.Core
             var answerMode = PlayerPrefs.HasKey(ANSWER_MODE_KEY)
                 ? (AnswerMode)PlayerPrefs.GetInt(ANSWER_MODE_KEY, (int)DefaultSettings.AnswerMode)
                 : DefaultSettings.AnswerMode;
+            var gameType = PlayerPrefs.HasKey(GAME_TYPE_KEY)
+                ? (GameType)PlayerPrefs.GetInt(GAME_TYPE_KEY, (int)DefaultSettings.GameType)
+                : DefaultSettings.GameType;
 
             // Валидируем загруженные значения
             difficulty = ValidateDifficulty(difficulty);
             questionsCount = ValidateQuestionsCount(questionsCount);
             answerMode = ValidateAnswerMode(answerMode);
+            gameType = ValidateGameType(gameType);
 
             return new GameSettings
             {
                 Difficulty = difficulty,
                 QuestionsCount = questionsCount,
-                AnswerMode = answerMode
+                AnswerMode = answerMode,
+                GameType = gameType
             };
         }
 
@@ -61,6 +68,7 @@ namespace MathGame.Core
                 Difficulty = ValidateDifficulty(settings.Difficulty),
                 QuestionsCount = ValidateQuestionsCount(settings.QuestionsCount),
                 AnswerMode = ValidateAnswerMode(settings.AnswerMode),
+                GameType = ValidateGameType(settings.GameType),
                 EnabledOperations = settings.EnabledOperations,
                 NumberRanges = settings.NumberRanges
             };
@@ -68,6 +76,7 @@ namespace MathGame.Core
             PlayerPrefs.SetInt(DIFFICULTY_KEY, (int)validatedSettings.Difficulty);
             PlayerPrefs.SetInt(QUESTIONS_COUNT_KEY, validatedSettings.QuestionsCount);
             PlayerPrefs.SetInt(ANSWER_MODE_KEY, (int)validatedSettings.AnswerMode);
+            PlayerPrefs.SetInt(GAME_TYPE_KEY, (int)validatedSettings.GameType);
             PlayerPrefs.Save();
         }
 
@@ -119,6 +128,21 @@ namespace MathGame.Core
             Debug.LogWarning(
                 $"Недопустимый режим ответа: {answerMode}, используется дефолтный: {DefaultSettings.AnswerMode}");
             return DefaultSettings.AnswerMode;
+        }
+
+        /// <summary>
+        /// Валидирует тип игры
+        /// </summary>
+        private static GameType ValidateGameType(GameType gameType)
+        {
+            if (System.Enum.IsDefined(typeof(GameType), gameType))
+            {
+                return gameType;
+            }
+
+            Debug.LogWarning(
+                $"Недопустимый тип игры: {gameType}, используется дефолтный: {DefaultSettings.GameType}");
+            return DefaultSettings.GameType;
         }
 
         #endregion

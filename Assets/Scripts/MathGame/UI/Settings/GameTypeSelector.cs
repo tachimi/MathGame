@@ -101,28 +101,6 @@ namespace MathGame.UI.Settings
         {
             // Уведомляем о запросе настроек
             OnGameTypeSettingsRequested?.Invoke(button.GameType);
-            
-            Debug.Log($"GameTypeSelector: Запрошены настройки для режима {button.GameType} ({button.DisplayText})");
-        }
-        
-        /// <summary>
-        /// Выбрать тип игры по enum'у
-        /// </summary>
-        public void SelectGameType(GameType gameType)
-        {
-            var button = GetButtonByGameType(gameType);
-            if (button != null)
-            {
-                SelectButton(button);
-            }
-        }
-        
-        /// <summary>
-        /// Получить текущий выбранный тип игры
-        /// </summary>
-        public GameType GetSelectedGameType()
-        {
-            return _selectedButton?.GameType ?? GameType.Cards;
         }
         
         /// <summary>
@@ -133,54 +111,6 @@ namespace MathGame.UI.Settings
             var button = _gameTypeButtons?.FirstOrDefault(button => 
                 button != null && button.GameType == gameType);
             return button;
-        }
-        
-        /// <summary>
-        /// Получить кнопку для указанного типа игры (публичный метод)
-        /// </summary>
-        public GameTypeButton GetButtonForGameType(GameType gameType)
-        {
-            return GetButtonByGameType(gameType);
-        }
-        
-        /// <summary>
-        /// Получить отображаемое имя текущего режима
-        /// </summary>
-        public string GetCurrentDisplayName()
-        {
-            return _selectedButton?.DisplayText ?? "Не выбран";
-        }
-        
-        /// <summary>
-        /// Проверить доступность всех режимов и обновить состояние
-        /// </summary>
-        public void RefreshAvailability()
-        {
-            if (_gameTypeButtons == null) return;
-            
-            foreach (var button in _gameTypeButtons)
-            {
-                if (button != null)
-                {
-                    // Обновляем состояние поддержки
-                    button.UpdateSupportedState();
-                    
-                    // Обновляем видимость кнопки настроек
-                    bool hasSettingsPanel = _panelSwitcher != null && 
-                                          _panelSwitcher.HasSettingsForGameType(button.GameType);
-                    button.SetSettingsButtonVisible(hasSettingsPanel);
-                }
-            }
-            
-            // Если текущий режим больше не поддерживается, переключаемся на первый доступный
-            if (_selectedButton != null && !_selectedButton.IsSupported)
-            {
-                var firstSupportedButton = _gameTypeButtons?.FirstOrDefault(b => b != null && b.IsSupported);
-                if (firstSupportedButton != null)
-                {
-                    SelectButton(firstSupportedButton);
-                }
-            }
         }
         
         /// <summary>

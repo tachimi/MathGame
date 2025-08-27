@@ -31,7 +31,6 @@ namespace MathGame.Core
             _settings = settings;
             _generator.Initialize(settings);
             _sessionResult = new GameSessionResult();
-            CurrentQuestionIndex = 0;
         }
         
         public void StartSession()

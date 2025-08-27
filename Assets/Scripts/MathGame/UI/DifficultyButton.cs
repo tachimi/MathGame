@@ -11,29 +11,23 @@ namespace MathGame.UI
     /// </summary>
     public class DifficultyButton : MonoBehaviour
     {
-        [Header("UI Components")] [SerializeField]
-        private Button _button;
-
+        public event Action<DifficultyButton> OnDifficultySelected;
+        public DifficultyLevel DifficultyLevel => _difficultyLevel;
+        public bool IsSelected { get; private set; }
+        
+        [Header("UI Components")]
+        [SerializeField] private Button _button;
         [SerializeField] private TextMeshProUGUI _buttonText;
         [SerializeField] private Image _background;
 
-        [Header("Visual Settings")] [SerializeField]
-        private Color _normalColor = Color.white;
+        [Header("Visual Settings")]
+        [SerializeField] private Sprite _normalSprite;
+        [SerializeField] private Sprite _selectedSprite;
+        [SerializeField] private Color _normalTextColor;
+        [SerializeField] private Color _selectedTextColor;
 
-        [SerializeField] private Color _selectedColor = new Color(0.3f, 0.7f, 0.3f, 1f);
-
-        [Header("Difficulty Data")] [SerializeField]
-        private DifficultyLevel _difficultyLevel;
-
-        [SerializeField] private string _displayText;
-        [SerializeField] private string _description;
-
-        public event Action<DifficultyButton> OnDifficultySelected;
-
-        public DifficultyLevel DifficultyLevel => _difficultyLevel;
-        public string DisplayText => _displayText;
-        public string Description => _description;
-        public bool IsSelected { get; private set; }
+        [Header("Difficulty Data")]
+        [SerializeField] private DifficultyLevel _difficultyLevel;
 
         private void Awake()
         {
@@ -46,17 +40,6 @@ namespace MathGame.UI
         }
 
         /// <summary>
-        /// Настройка кнопки с данными уровня сложности
-        /// </summary>
-        public void Configure(DifficultyLevel difficulty, string displayText, string description = "")
-        {
-            _difficultyLevel = difficulty;
-            _displayText = displayText;
-            _description = description;
-            UpdateDisplayText();
-        }
-
-        /// <summary>
         /// Установить состояние выбора
         /// </summary>
         public void SetSelected(bool selected)
@@ -65,65 +48,25 @@ namespace MathGame.UI
             UpdateVisualState();
         }
 
-        private void UpdateDisplayText()
-        {
-            if (_buttonText != null && !string.IsNullOrEmpty(_displayText))
-            {
-                _buttonText.text = _displayText;
-            }
-        }
-
         private void UpdateVisualState()
         {
             if (_background != null)
             {
-                _background.color = IsSelected ? _selectedColor : _normalColor;
+                _background.sprite = IsSelected ? _selectedSprite : _normalSprite;
             }
-
+            
             // Можно добавить дополнительные визуальные эффекты
             if (_buttonText != null)
             {
                 _buttonText.fontStyle = IsSelected ? FontStyles.Bold : FontStyles.Normal;
+                _buttonText.color = IsSelected ? _selectedTextColor : _normalTextColor;
             }
-        }
-
-        /// <summary>
-        /// Получить информацию о диапазоне чисел для этого уровня
-        /// </summary>
-        public (int min, int max) GetNumberRange()
-        {
-            return _difficultyLevel switch
-            {
-                DifficultyLevel.Easy => (1, 10),
-                DifficultyLevel.Medium => (1, 100),
-                DifficultyLevel.Hard => (1, 1000),
-                _ => (1, 10)
-            };
         }
 
         private void OnDestroy()
         {
             if (_button != null)
                 _button.onClick.RemoveAllListeners();
-        }
-
-        // Методы для настройки в Inspector'е
-        [ContextMenu("Configure Easy")]
-        private void ConfigureEasy()
-        {
-            Configure(DifficultyLevel.Easy, "Легкий", "Числа от 1 до 10");
-        }
-
-        [ContextMenu("Configure Medium")]
-        private void ConfigureMedium()
-        {
-            Configure(DifficultyLevel.Medium, "Средний", "Числа от 11 до 20");
-        }
-
-        [ContextMenu("Configure Hard")]
-        private void ConfigureHard()
-        {
-            Configure(DifficultyLevel.Hard, "Сложный", "Числа от 21 до 50");
         }
     }
 }

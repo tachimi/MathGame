@@ -15,9 +15,9 @@ namespace MathGame.UI.Cards
         [Header("Flash Components")] [SerializeField]
         private TextMeshProUGUI _answerText;
 
-        [Header("Visual Feedback")] [SerializeField]
-        private Color _rememberedColor = Color.green;
-
+        [Header("Visual Feedback")]
+        [SerializeField] private Color _normalColor = Color.white;
+        [SerializeField] private Color _rememberedColor = Color.green;
         [SerializeField] private Color _notRememberedColor = Color.red;
 
         [SerializeField]
@@ -40,7 +40,6 @@ namespace MathGame.UI.Cards
             if (_answerText != null)
             {
                 _answerText.text = _currentQuestion.CorrectAnswer.ToString();
-                _answerText.color = Color.black; // Сбрасываем цвет
             }
         }
 
@@ -55,19 +54,19 @@ namespace MathGame.UI.Cards
             if (dragDistance > 0)
             {
                 // Тянем вверх - зеленый цвет (запомнил)
-                Color feedbackColor = Color.Lerp(Color.black, _rememberedColor, intensity);
+                Color feedbackColor = Color.Lerp(_normalColor, _rememberedColor, intensity);
                 _answerText.color = feedbackColor;
             }
             else if (dragDistance < 0)
             {
                 // Тянем вниз - красный цвет (не запомнил)
-                Color feedbackColor = Color.Lerp(Color.black, _notRememberedColor, intensity);
+                Color feedbackColor = Color.Lerp(_normalColor, _notRememberedColor, intensity);
                 _answerText.color = feedbackColor;
             }
             else
             {
-                // Нет перетаскивания - возвращаем черный цвет
-                _answerText.color = Color.black;
+                // Нет перетаскивания - возвращаем дефолтный цвет
+                _answerText.color = _normalColor;
             }
         }
 
@@ -98,14 +97,8 @@ namespace MathGame.UI.Cards
             // Сбрасываем цвета для нового вопроса
             if (_answerText != null)
             {
-                _answerText.color = Color.black;
+                _answerText.color = _normalColor;
             }
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            // Дополнительная очистка для Flash карточки, если необходимо
         }
     }
 }

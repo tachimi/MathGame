@@ -109,8 +109,6 @@ namespace MathGame.UI
         {
             _globalSettings.GameType = gameType;
             GlobalSettingsManager.SaveGlobalSettings(_globalSettings);
-            
-            Debug.Log($"SettingsScreen: Выбран режим игры {gameType} ({_gameTypeSelector?.GetCurrentDisplayName()})");
         }
         
         private void OnGameTypeSettingsRequested(GameType gameType)

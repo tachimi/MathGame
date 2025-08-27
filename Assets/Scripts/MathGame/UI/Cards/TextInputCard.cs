@@ -151,7 +151,6 @@ namespace MathGame.UI.Cards
             if (_inputDisplay != null)
             {
                 _inputDisplay.text = string.IsNullOrEmpty(_currentInput) ? "?" : _currentInput;
-                _inputDisplay.color = Color.black;
             }
         }
 

@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Linq;
+using DG.Tweening;
 using MathGame.Enums;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,9 +21,6 @@ namespace MathGame.UI.Settings
             public GameType gameType;
             public GameObject settingsPanel;
             public Button backButton;
-            
-            [HideInInspector]
-            public Vector2 originalPosition; // Сохраняем изначальную позицию панели
         }
         
         [Header("Main Panel")]
@@ -34,10 +31,10 @@ namespace MathGame.UI.Settings
         
         [Header("Animation Settings")]
         [SerializeField] private float _animationDuration = 0.3f;
-        [SerializeField] private AnimationCurve _animationCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+        [SerializeField] private Ease _easeType = Ease.OutQuad;
         
         private GameObject _currentSettingsPanel;
-        private Coroutine _animationCoroutine;
+        private Sequence _currentSequence;
         private bool _isAnimating;
         
         private Vector2 _mainPanelOriginalPosition;
@@ -74,22 +71,6 @@ namespace MathGame.UI.Settings
             {
                 _mainPanelOriginalPosition = _mainSettingsPanel.anchoredPosition;
             }
-            
-            // Сохраняем позиции панелей настроек
-            if (_gameModeSettings != null)
-            {
-                foreach (var settings in _gameModeSettings)
-                {
-                    if (settings.settingsPanel != null)
-                    {
-                        var rect = settings.settingsPanel.GetComponent<RectTransform>();
-                        if (rect != null)
-                        {
-                            settings.originalPosition = rect.anchoredPosition;
-                        }
-                    }
-                }
-            }
         }
         
         private void SetupBackButtons()
@@ -119,10 +100,8 @@ namespace MathGame.UI.Settings
                 return;
             }
             
-            if (_animationCoroutine != null)
-                StopCoroutine(_animationCoroutine);
-                
-            _animationCoroutine = StartCoroutine(AnimatePanelSwitch(settingsAssociation, true));
+            _currentSequence?.Kill();
+            AnimatePanelSwitch(settingsAssociation);
         }
         
         /// <summary>
@@ -141,114 +120,103 @@ namespace MathGame.UI.Settings
         {
             if (_isAnimating) return;
             
-            if (_animationCoroutine != null)
-                StopCoroutine(_animationCoroutine);
-                
-            _animationCoroutine = StartCoroutine(AnimateBackToMain());
+            _currentSequence?.Kill();
+            AnimateBackToMain();
         }
         
-        private IEnumerator AnimatePanelSwitch(GameModeSettingsPanel settingsData, bool showingGameModeSettings)
+        private void AnimatePanelSwitch(GameModeSettingsPanel settingsData)
         {
+            if (settingsData?.settingsPanel == null) return;
+            
             _isAnimating = true;
-            
-            if (settingsData?.settingsPanel == null)
-            {
-                _isAnimating = false;
-                yield break;
-            }
-            
             GameObject targetPanel = settingsData.settingsPanel;
             RectTransform targetRect = targetPanel.GetComponent<RectTransform>();
             
             if (targetRect == null)
             {
                 _isAnimating = false;
-                yield break;
+                return;
             }
-            
-            float elapsedTime = 0;
             
             // Активируем целевую панель
             targetPanel.SetActive(true);
             
-            // Начальные и целевые позиции с учетом сохраненных координат
-            Vector2 mainStartPos = _mainSettingsPanel.anchoredPosition;
-            Vector2 mainTargetPos = new Vector2(-_screenWidth, _mainPanelOriginalPosition.y); // Главная панель уходит влево
+            // Сохраняем оригинальную позицию панели настроек (она может отличаться от главной)
+            Vector2 targetOriginalPos = targetRect.anchoredPosition;
             
-            Vector2 targetStartPos = new Vector2(_screenWidth, _mainPanelOriginalPosition.y); // Панель настроек стартует справа на уровне главной панели
-            Vector2 targetEndPos = _mainPanelOriginalPosition; // Конечная позиция - там где была главная панель
+            // Вычисляем правильную конечную позицию X с учетом якоря панели
+            // Если якорь справа (1, y), то для центрирования нужно X = -screenWidth/2
+            // Если якорь в центре (0.5, y), то для центрирования нужно X = 0
+            float targetEndX = 0;
+            if (targetRect.anchorMin.x >= 0.9f) // Якорь справа
+            {
+                targetEndX = -_screenWidth / 2f;
+            }
+            else if (targetRect.anchorMin.x <= 0.1f) // Якорь слева
+            {
+                targetEndX = _screenWidth / 2f;
+            }
+            // Иначе якорь в центре, оставляем 0
+            
+            // Позиции для анимации
+            Vector2 mainTargetPos = new Vector2(-_screenWidth, _mainPanelOriginalPosition.y);
+            Vector2 targetStartPos = new Vector2(_screenWidth, targetOriginalPos.y);
+            Vector2 targetEndPos = new Vector2(targetEndX, targetOriginalPos.y);
             
             // Устанавливаем начальную позицию панели настроек
             targetRect.anchoredPosition = targetStartPos;
             
-            // Анимируем обе панели
-            while (elapsedTime < _animationDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                float t = _animationCurve.Evaluate(elapsedTime / _animationDuration);
-                
-                _mainSettingsPanel.anchoredPosition = Vector2.Lerp(mainStartPos, mainTargetPos, t);
-                targetRect.anchoredPosition = Vector2.Lerp(targetStartPos, targetEndPos, t);
-                
-                yield return null;
-            }
+            // Создаем последовательность анимаций
+            _currentSequence = DOTween.Sequence()
+                .SetEase(_easeType)
+                .OnStart(() => _isAnimating = true)
+                .OnComplete(() =>
+                {
+                    _currentSettingsPanel = targetPanel;
+                    _isAnimating = false;
+                });
             
-            // Финальные позиции
-            _mainSettingsPanel.anchoredPosition = mainTargetPos;
-            targetRect.anchoredPosition = targetEndPos;
-            
-            _currentSettingsPanel = targetPanel;
-            _isAnimating = false;
+            // Добавляем анимации движения панелей
+            _currentSequence.Join(_mainSettingsPanel.DOAnchorPos(mainTargetPos, _animationDuration));
+            _currentSequence.Join(targetRect.DOAnchorPos(targetEndPos, _animationDuration));
         }
         
-        private IEnumerator AnimateBackToMain()
+        private void AnimateBackToMain()
         {
+            if (_currentSettingsPanel == null) return;
+            
             _isAnimating = true;
-            
-            if (_currentSettingsPanel == null)
-            {
-                _isAnimating = false;
-                yield break;
-            }
-            
             RectTransform currentRect = _currentSettingsPanel.GetComponent<RectTransform>();
+            
             if (currentRect == null)
             {
                 _isAnimating = false;
-                yield break;
+                return;
             }
             
-            float elapsedTime = 0;
+            // Сохраняем текущую Y позицию панели настроек
+            float currentPanelY = currentRect.anchoredPosition.y;
             
-            // Начальные и целевые позиции
-            Vector2 mainStartPos = _mainSettingsPanel.anchoredPosition;
-            Vector2 mainTargetPos = _mainPanelOriginalPosition; // Возвращаем на изначальную позицию
+            // Позиции для обратной анимации
+            Vector2 mainTargetPos = _mainPanelOriginalPosition;
+            Vector2 currentTargetPos = new Vector2(_screenWidth / 2, currentPanelY); // Уходит вправо на своей Y позиции
             
-            Vector2 currentStartPos = currentRect.anchoredPosition;
-            // Панель настроек уходит вправо на том же уровне, где находится главная панель
-            Vector2 currentTargetPos = new Vector2(_screenWidth, _mainPanelOriginalPosition.y);
+            GameObject panelToHide = _currentSettingsPanel;
             
-            // Анимируем обе панели
-            while (elapsedTime < _animationDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                float t = _animationCurve.Evaluate(elapsedTime / _animationDuration);
-                
-                _mainSettingsPanel.anchoredPosition = Vector2.Lerp(mainStartPos, mainTargetPos, t);
-                currentRect.anchoredPosition = Vector2.Lerp(currentStartPos, currentTargetPos, t);
-                
-                yield return null;
-            }
+            // Создаем последовательность обратных анимаций
+            _currentSequence = DOTween.Sequence()
+                .SetEase(_easeType)
+                .OnStart(() => _isAnimating = true)
+                .OnComplete(() =>
+                {
+                    panelToHide.SetActive(false);
+                    _currentSettingsPanel = null;
+                    _isAnimating = false;
+                });
             
-            // Финальные позиции
-            _mainSettingsPanel.anchoredPosition = mainTargetPos;
-            currentRect.anchoredPosition = currentTargetPos;
-            
-            // Скрываем панель настроек режима
-            _currentSettingsPanel.SetActive(false);
-            _currentSettingsPanel = null;
-            
-            _isAnimating = false;
+            // Добавляем анимации возврата панелей
+            _currentSequence.Join(_mainSettingsPanel.DOAnchorPos(mainTargetPos, _animationDuration));
+            _currentSequence.Join(currentRect.DOAnchorPos(currentTargetPos, _animationDuration));
         }
         
         private GameModeSettingsPanel GetSettingsForGameType(GameType gameType)
@@ -279,8 +247,10 @@ namespace MathGame.UI.Settings
                     var rect = settings.settingsPanel.GetComponent<RectTransform>();
                     if (rect != null)
                     {
-                        // Устанавливаем позицию справа от экрана на уровне главной панели
-                        rect.anchoredPosition = new Vector2(_screenWidth, _mainPanelOriginalPosition.y);
+                        // Сохраняем оригинальную Y позицию каждой панели
+                        float originalY = rect.anchoredPosition.y;
+                        // Устанавливаем позицию справа от экрана на своей Y позиции
+                        rect.anchoredPosition = new Vector2(_screenWidth, originalY);
                     }
                 }
             }
@@ -288,6 +258,9 @@ namespace MathGame.UI.Settings
         
         private void OnDestroy()
         {
+            // Останавливаем все анимации DOTween
+            _currentSequence?.Kill();
+            
             if (_gameModeSettings != null)
             {
                 foreach (var settings in _gameModeSettings)
