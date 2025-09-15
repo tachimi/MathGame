@@ -5,19 +5,9 @@ namespace MathGame.Enums
     /// </summary>
     public enum GameType
     {
-        /// <summary>
-        /// Режим карточек (текущая реализация)
-        /// </summary>
-        Cards = 0,
-        
-        /// <summary>
-        /// Режим летающих шариков с ответами
-        /// </summary>
-        Balloons = 1,
-        
-        /// <summary>
-        /// Режим сетки с ответами
-        /// </summary>
-        Grid = 2
+        AnswerMathCards = 0,
+        InputMathCards = 1,
+        FlashMathCards = 2,
+        Balloons = 3
     }
 }

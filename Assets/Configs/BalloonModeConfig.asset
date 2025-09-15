@@ -12,9 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dfd770b99c199a439462edca4e4c91e, type: 3}
   m_Name: BalloonModeConfig
   m_EditorClassIdentifier: 
-  BalloonsCount: 10
-  BalloonSpeed: 125
-  SpawnInterval: 2
+  BalloonPrefab: {fileID: 7234087433626605716, guid: 4a90cdc0db2ed984c9368466bfc0aabc, type: 3}
+  BalloonsCount: 12
+  SpawnVerticalRandomness: 50
+  InitialForceRange: 2
+  SpawnIntervalMs: 50
+  DifficultySettings:
+  - DifficultyLevel: 0
+    RoundTime: 60
+    Lives: 3
+    MinGravity: 0.1
+    MaxGravity: 0.15
+    Drag: 1
+  - DifficultyLevel: 1
+    RoundTime: 60
+    Lives: 2
+    MinGravity: 0.15
+    MaxGravity: 0.2
+    Drag: 1
+  - DifficultyLevel: 2
+    RoundTime: 60
+    Lives: 1
+    MinGravity: 0.2
+    MaxGravity: 0.25
+    Drag: 1
   balloonColors:
   - {r: 0.82641506, g: 0.21673898, b: 0.21673898, a: 1}
   - {r: 0.17877528, g: 0.17877528, b: 0.79622644, a: 1}
@@ -26,10 +47,15 @@ MonoBehaviour:
   ColorMode: 0
   CorrectAnswerBalloonColor: {r: 0, g: 1, b: 0, a: 1}
   WrongAnswerBalloonColor: {r: 1, g: 0, b: 0, a: 1}
-  SpawnBottomOffset: -100
-  SpawnLeftOffset: -150
-  SpawnRightOffset: -150
   ScreenBoundsPadding: 0.4
-  RoundEndDelay: 2.5
-  CountdownDelay: 1
-  FeedbackConfig: {fileID: 11400000, guid: f3d425ec4b77a3f49be7eeb2bc43bd18, type: 2}
+  AnswerFeedbackDelay: 1.5
+  SafeBoundsPadding: 75
+  ClickRadiusMultiplier: 0.9
+  BalloonFriction: 0.1
+  BalloonBounciness: 0.7
+  MaxWrongAnswerAttempts: 20
+  EnableBalloonTails: 1
+  WindStrength: 15
+  WindFrequency: 1.5
+  PopEffectPrefab: {fileID: 570832250925526149, guid: dcd90c4976197424b9958a7c54b6bb8c, type: 3}
+  PopSoundType: 2

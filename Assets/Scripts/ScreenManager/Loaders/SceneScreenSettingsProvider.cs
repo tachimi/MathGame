@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MathGame.Screens;
 using MathGame.UI;
 using Plugins.ScreenManager.Interfaces;
 using ScreenManager.Enums;
@@ -19,8 +20,10 @@ namespace ScreenManager.Loaders
             AddScreenSettings(ScreenId.None, "None");
             AddScreenSettings(typeof(MainMenuScreen), "MainMenu");
             AddScreenSettings(typeof(SettingsScreen), "Settings");
+            AddScreenSettings(typeof(OperationSelectionScreen), "OperationSelection");
             AddScreenSettings(typeof(RangeSelectionScreen), "RangeSelection");
-            AddScreenSettings(typeof(GameScreen), "Game");
+            AddScreenSettings(typeof(CardsGameScreen), "CardsGame");
+            AddScreenSettings(typeof(BalloonGameScreen), "BalloonGame");
             AddScreenSettings(typeof(ResultScreen), "Result");
 
             _subscriptions = new CompositeDisposable

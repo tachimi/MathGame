@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Bootstrap.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 1
-    path: Assets/Scenes/MainMenu.unity
+    path: Assets/Scenes/OperationSelection.unity
     guid: 15cab77cbbaac46438ac7cd400f223db
   - enabled: 1
     path: Assets/Scenes/Settings.unity
@@ -18,9 +18,15 @@ EditorBuildSettings:
     path: Assets/Scenes/RangeSelection.unity
     guid: 1195788fdd817464c918467a69a191a8
   - enabled: 1
-    path: Assets/Scenes/Game.unity
+    path: Assets/Scenes/CardsGame.unity
     guid: 396d7833507e3a049812e1cba9da8fa7
   - enabled: 1
     path: Assets/Scenes/Result.unity
     guid: 4593161bd4137a04c9fb3b88bca31bcc
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: e125703d76ad63245a9a5d90cc9c89da
+  - enabled: 1
+    path: Assets/Scenes/BalloonGame.unity
+    guid: d1cf52ef2d26b0f458b6e2f1ffcfe607
   m_configObjects: {}

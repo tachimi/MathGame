@@ -11,30 +11,30 @@ namespace MathGame.Questions
     public class QuestionGenerator
     {
         private GameSettings _settings;
-        
+
         // Отслеживание сгенерированных примеров для избежания дубликатов
-        private HashSet<string> _generatedQuestions = new HashSet<string>();
-        
+        private HashSet<string> _generatedQuestions = new();
+
         // Счетчики специальных случаев
-        private Dictionary<MathOperation, int> _zeroOperandCount = new Dictionary<MathOperation, int>();
-        private Dictionary<MathOperation, int> _oneOperandCount = new Dictionary<MathOperation, int>();
+        private Dictionary<MathOperation, int> _zeroOperandCount = new();
+        private Dictionary<MathOperation, int> _oneOperandCount = new();
         private int _divisionByOneCount = 0;
 
         public QuestionGenerator()
         {
             InitializeCounters();
         }
-        
+
         public void Initialize(GameSettings settings)
         {
             _settings = settings;
-            
+
             // Инициализируем Random с временным сидом для лучшей случайности
             Random.InitState((int)DateTime.Now.Ticks);
-            
+
             ResetSession();
         }
-        
+
         /// <summary>
         /// Сброс состояния для новой сессии
         /// </summary>
@@ -43,13 +43,13 @@ namespace MathGame.Questions
             _generatedQuestions.Clear();
             InitializeCounters();
         }
-        
+
         private void InitializeCounters()
         {
             _zeroOperandCount.Clear();
             _oneOperandCount.Clear();
             _divisionByOneCount = 0;
-            
+
             // Инициализируем счетчики для всех операций
             foreach (MathOperation op in Enum.GetValues(typeof(MathOperation)))
             {
@@ -57,16 +57,16 @@ namespace MathGame.Questions
                 _oneOperandCount[op] = 0;
             }
         }
-        
+
         public Question GenerateQuestion()
         {
             const int maxAttempts = 1000; // Защита от бесконечного цикла
             var attempts = 0;
-            
+
             while (attempts < maxAttempts)
             {
                 attempts++;
-                
+
                 var operation = GetRandomOperation();
                 var numberRange = GetRandomNumberRange();
 
@@ -86,11 +86,11 @@ namespace MathGame.Questions
                     return question;
                 }
             }
-            
+
             // Если не смогли сгенерировать валидный вопрос, возвращаем простой пример
             return CreateFallbackQuestion();
         }
-        
+
         private (int min, int max) GetRangeByDifficulty(DifficultyLevel level)
         {
             return level switch
@@ -101,7 +101,7 @@ namespace MathGame.Questions
                 _ => (1, 10)
             };
         }
-        
+
         private NumberRange GetRandomNumberRange()
         {
             if (_settings.NumberRanges == null || _settings.NumberRanges.Count == 0)
@@ -109,30 +109,30 @@ namespace MathGame.Questions
                 // Возвращаем диапазон по умолчанию на основе сложности
                 return GetDefaultRange();
             }
-            
-            int index = Random.Range(0, _settings.NumberRanges.Count);
+
+            var index = Random.Range(0, _settings.NumberRanges.Count);
             return _settings.NumberRanges[index];
         }
-        
+
         private NumberRange GetDefaultRange()
         {
             var (min, max) = GetRangeByDifficulty(_settings.Difficulty);
             return new NumberRange(min, max);
         }
-        
+
         private MathOperation GetRandomOperation()
         {
             if (_settings.EnabledOperations == null || _settings.EnabledOperations.Count == 0)
             {
                 return MathOperation.Addition;
             }
-            
+
             int index = Random.Range(0, _settings.EnabledOperations.Count);
             return _settings.EnabledOperations[index];
         }
-        
+
         #region Специализированные методы генерации
-        
+
         /// <summary>
         /// Генерация примера сложения с учетом ограничений
         /// </summary>
@@ -140,14 +140,15 @@ namespace MathGame.Questions
         {
             // Получаем полный диапазон сложности для второго числа
             var fullRange = GetDefaultRange();
-            
+
             // Первое число - из выбранного пользователем диапазона
             int first = Random.Range(userRange.Min, userRange.Max + 1);
             // Второе число - из полного диапазона сложности
             int second = Random.Range(fullRange.Min, fullRange.Max + 1);
-            
-            Debug.Log($"GenerateAddition: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
-            
+
+            Debug.Log(
+                $"GenerateAddition: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
+
             return new Question
             {
                 FirstNumber = first,
@@ -156,7 +157,7 @@ namespace MathGame.Questions
                 CorrectAnswer = first + second
             };
         }
-        
+
         /// <summary>
         /// Генерация примера вычитания: первый >= второго
         /// </summary>
@@ -164,14 +165,15 @@ namespace MathGame.Questions
         {
             // Получаем полный диапазон сложности для второго числа
             var fullRange = GetDefaultRange();
-            
+
             // Первое число - из пользовательского диапазона
             int first = Random.Range(userRange.Min, userRange.Max + 1);
             // Второе число - из полного диапазона сложности, но не больше первого
             int second = Random.Range(fullRange.Min, Math.Min(fullRange.Max, first) + 1);
-            
-            Debug.Log($"GenerateSubtraction: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
-            
+
+            Debug.Log(
+                $"GenerateSubtraction: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
+
             return new Question
             {
                 FirstNumber = first,
@@ -180,7 +182,7 @@ namespace MathGame.Questions
                 CorrectAnswer = first - second
             };
         }
-        
+
         /// <summary>
         /// Генерация примера умножения с учетом ограничений
         /// </summary>
@@ -188,14 +190,15 @@ namespace MathGame.Questions
         {
             // Получаем полный диапазон сложности для второго числа
             var fullRange = GetDefaultRange();
-            
+
             // Первое число - из выбранного пользователем диапазона
             int first = Random.Range(userRange.Min, userRange.Max + 1);
             // Второе число - из полного диапазона сложности
             int second = Random.Range(fullRange.Min, fullRange.Max + 1);
-            
-            Debug.Log($"GenerateMultiplication: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
-            
+
+            Debug.Log(
+                $"GenerateMultiplication: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
+
             return new Question
             {
                 FirstNumber = first,
@@ -204,7 +207,7 @@ namespace MathGame.Questions
                 CorrectAnswer = first * second
             };
         }
-        
+
         /// <summary>
         /// Генерация примера деления: результат целый, делитель не ноль
         /// </summary>
@@ -212,13 +215,13 @@ namespace MathGame.Questions
         {
             // Получаем полный диапазон сложности для второго числа (делителя)
             var fullRange = GetDefaultRange();
-            
+
             // Делимое - из пользовательского диапазона
             int dividend = Random.Range(userRange.Min, userRange.Max + 1);
-            
+
             // Делитель - из полного диапазона сложности (не ноль), но должен быть делителем dividend
             var possibleDivisors = new List<int>();
-            
+
             for (int i = Math.Max(1, fullRange.Min); i <= Math.Min(fullRange.Max, dividend); i++)
             {
                 if (dividend % i == 0) // i является делителем dividend
@@ -226,18 +229,19 @@ namespace MathGame.Questions
                     possibleDivisors.Add(i);
                 }
             }
-            
+
             if (possibleDivisors.Count == 0)
             {
                 // Если нет подходящих делителей, используем 1
                 possibleDivisors.Add(1);
             }
-            
+
             int divisor = possibleDivisors[Random.Range(0, possibleDivisors.Count)];
             int result = dividend / divisor;
-            
-            Debug.Log($"GenerateDivision: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), dividend={dividend}, divisor={divisor}, result={result}");
-            
+
+            Debug.Log(
+                $"GenerateDivision: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), dividend={dividend}, divisor={divisor}, result={result}");
+
             return new Question
             {
                 FirstNumber = dividend,
@@ -246,11 +250,11 @@ namespace MathGame.Questions
                 CorrectAnswer = result
             };
         }
-        
+
         #endregion
-        
+
         #region Валидация и регистрация вопросов
-        
+
         /// <summary>
         /// Проверка вопроса на соответствие бизнес-правилам
         /// </summary>
@@ -260,35 +264,35 @@ namespace MathGame.Questions
             string questionKey = GetQuestionKey(question);
             if (_generatedQuestions.Contains(questionKey))
                 return false;
-            
+
             // Проверка специальных случаев
             return IsSpecialCaseAllowed(question);
         }
-        
+
         /// <summary>
         /// Проверка на разрешенность специальных случаев (ноль, единица)
         /// </summary>
         private bool IsSpecialCaseAllowed(Question question)
         {
             var op = question.Operation;
-            
+
             // Проверка случаев с нулем
             if (question.FirstNumber == 0 || question.SecondNumber == 0)
             {
                 // Для + и * разрешен только один случай с нулем
-                if ((op == MathOperation.Addition || op == MathOperation.Multiplication) && 
+                if ((op == MathOperation.Addition || op == MathOperation.Multiplication) &&
                     _zeroOperandCount[op] >= 1)
                 {
                     return false;
                 }
-                
+
                 // Для деления ноль во втором операнде недопустим
                 if (op == MathOperation.Division && question.SecondNumber == 0)
                 {
                     return false;
                 }
             }
-            
+
             // Проверка случаев с единицей
             if (question.FirstNumber == 1 || question.SecondNumber == 1)
             {
@@ -297,17 +301,17 @@ namespace MathGame.Questions
                 {
                     return false;
                 }
-                
+
                 // Для деления на 1 разрешен только один случай
                 if (op == MathOperation.Division && question.SecondNumber == 1 && _divisionByOneCount >= 1)
                 {
                     return false;
                 }
             }
-            
+
             return true;
         }
-        
+
         /// <summary>
         /// Регистрация сгенерированного вопроса
         /// </summary>
@@ -315,26 +319,26 @@ namespace MathGame.Questions
         {
             string questionKey = GetQuestionKey(question);
             _generatedQuestions.Add(questionKey);
-            
+
             // Обновляем счетчики специальных случаев
             var op = question.Operation;
-            
+
             if (question.FirstNumber == 0 || question.SecondNumber == 0)
             {
                 _zeroOperandCount[op]++;
             }
-            
+
             if (question.FirstNumber == 1 || question.SecondNumber == 1)
             {
                 _oneOperandCount[op]++;
-                
+
                 if (op == MathOperation.Division && question.SecondNumber == 1)
                 {
                     _divisionByOneCount++;
                 }
             }
         }
-        
+
         /// <summary>
         /// Генерация ключа для идентификации уникальности вопроса
         /// </summary>
@@ -342,7 +346,7 @@ namespace MathGame.Questions
         {
             return $"{question.FirstNumber}{GetOperationSymbol(question.Operation)}{question.SecondNumber}";
         }
-        
+
         /// <summary>
         /// Резервный вопрос, если не удалось сгенерировать валидный
         /// </summary>
@@ -357,7 +361,7 @@ namespace MathGame.Questions
                 QuestionText = "1 + 1"
             };
         }
-        
+
         /// <summary>
         /// Получить символ операции
         /// </summary>
@@ -372,19 +376,7 @@ namespace MathGame.Questions
                 _ => "+"
             };
         }
-        
+
         #endregion
-        
-        private int CalculateAnswer(int first, int second, MathOperation operation)
-        {
-            return operation switch
-            {
-                MathOperation.Addition => first + second,
-                MathOperation.Subtraction => first - second,
-                MathOperation.Multiplication => first * second,
-                MathOperation.Division => second != 0 ? first / second : 0,
-                _ => first + second
-            };
-        }
     }
 }

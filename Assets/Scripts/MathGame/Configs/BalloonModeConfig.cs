@@ -1,4 +1,6 @@
  using UnityEngine;
+using MathGame.Enums;
+using SoundSystem.Enums;
 
 namespace MathGame.Configs
 {
@@ -18,18 +20,35 @@ namespace MathGame.Configs
     }
     
     /// <summary>
-    /// Режим выбора колонок для спавна
+    /// Настройки для конкретного уровня сложности
     /// </summary>
-    public enum ColumnSpawnMode
+    [System.Serializable]
+    public class BalloonDifficultySettings
     {
-        [Tooltip("Спавн по колонкам по порядку слева направо")]
-        Sequential = 0,
-        
-        [Tooltip("Случайный порядок колонок один раз в начале")]
-        Random = 1,
-        
-        [Tooltip("Рандомный порядок колонок для каждой новой волны")]
-        RandomPerWave = 2
+        [Tooltip("Уровень сложности")]
+        public DifficultyLevel DifficultyLevel = DifficultyLevel.Medium;
+
+        [Header("Настройки игры")]
+        [Tooltip("Время раунда в секундах")]
+        public float RoundTime = 30f;
+
+        [Tooltip("Количество жизней")]
+        public int Lives = 3;
+
+        [Header("Настройки физики")]
+        [Tooltip("Минимальная сила гравитации (для полета вверх)")]
+        public float MinGravity = 7f;
+
+        [Tooltip("Максимальная сила гравитации (для полета вверх)")]
+        public float MaxGravity = 12f;
+
+        [Tooltip("Сопротивление воздуха")]
+        public float Drag = 0.5f;
+
+        /// <summary>
+        /// Свойство для совместимости со старым кодом
+        /// </summary>
+        public float Gravity => (MinGravity + MaxGravity) * 0.5f;
     }
     /// <summary>
     /// Конфигурация для игрового режима Balloons
@@ -38,18 +57,25 @@ namespace MathGame.Configs
     public class BalloonModeConfig : ScriptableObject
     {
         [Header("Настройки шариков")]
-        [field: SerializeField] public int BalloonsCount = 10;
-        [field: SerializeField] public float BalloonSpeed = 100f;
+        [field: SerializeField] public GameObject BalloonPrefab;
+        [field: SerializeField] public int BalloonsCount = 12;
         
-        [Header("Настройки спавна по колонкам")]
-        [Tooltip("Количество колонок для спавна шариков")]
-        [field: SerializeField] public int SpawnColumns = 3;
-        [Tooltip("Интервал между спавном в колонках (0 = спавн во всех колонках сразу)")]
-        [field: SerializeField] public float ColumnSpawnInterval = 0.5f;
-        [Tooltip("Задержка между волнами спавна")]
-        [field: SerializeField] public float WaveDelay = 1f;
-        [Tooltip("Режим выбора колонок для спавна")]
-        [field: SerializeField] public ColumnSpawnMode ColumnMode = ColumnSpawnMode.Sequential;
+        [Header("Настройки спавна")]
+        [Tooltip("Случайный разброс по вертикали при спавне внизу экрана")]
+        [field: SerializeField] public float SpawnVerticalRandomness = 50f;
+        [Tooltip("Диапазон начальной силы для полета шариков вверх")]
+        [field: SerializeField] public float InitialForceRange = 500f;
+        [Tooltip("Интервал между спавном шариков в миллисекундах")]
+        [field: SerializeField, Range(50, 500)] public int SpawnIntervalMs = 100;
+        
+        [Header("Настройки сложности")]
+        [Tooltip("Массив настроек для разных уровней сложности")]
+        [field: SerializeField] public BalloonDifficultySettings[] DifficultySettings = new BalloonDifficultySettings[]
+        {
+            new() { DifficultyLevel = DifficultyLevel.Easy, RoundTime = 45f, Lives = 5, MinGravity = 5f, MaxGravity = 8f, Drag = 1f },
+            new() { DifficultyLevel = DifficultyLevel.Medium, RoundTime = 30f, Lives = 3, MinGravity = 7f, MaxGravity = 12f, Drag = 0.5f },
+            new() { DifficultyLevel = DifficultyLevel.Hard, RoundTime = 20f, Lives = 1, MinGravity = 10f, MaxGravity = 15f, Drag = 0.2f }
+        };
         [Tooltip("Палитра цветов для шариков")]
         public Color[] balloonColors = {
             Color.red, Color.blue, Color.green, Color.yellow,
@@ -66,22 +92,25 @@ namespace MathGame.Configs
         [Tooltip("Цвет для шариков с неправильными ответами в режиме Themed")]
         [field: SerializeField] public Color WrongAnswerBalloonColor = Color.red;
         
-        [Header("Настройка зоны спавна")]
-        [Tooltip("Отступ снизу для зоны спавна (положительное значение поднимает зону спавна выше)")]
-        [field: SerializeField] public int SpawnBottomOffset = 50;
-        [Tooltip("Отступ слева для зоны спавна")]
-        [field: SerializeField] public int SpawnLeftOffset = 80;
-        [Tooltip("Отступ справа для зоны спавна")]
-        [field: SerializeField] public int SpawnRightOffset = 80;
         [Tooltip("Множитель границ экрана для автоматического лопания шариков (1.1 = 10% за экраном)")]
         [field: SerializeField] public float ScreenBoundsPadding = 1.1f;
         
-        [Header("Настройка задержек")]
-        [field: SerializeField] public float RoundEndDelay = 2f;
-        [field: SerializeField] public float CountdownDelay = 1f;
+        [Tooltip("Время показа результата после попадания в правильный/неправильный шарик")]
+        [field: SerializeField] public float AnswerFeedbackDelay = 1.5f;
         
-        [Header("Конфиг фидбека")]
-        [field: SerializeField] public BalloonFeedbackConfig FeedbackConfig;
+        [Header("Физические константы")]
+        [Tooltip("Отступ от границ контейнера для безопасного размещения шариков")]
+        [field: SerializeField] public float SafeBoundsPadding = 50f;
+        [Tooltip("Множитель радиуса для точности клика (1.0 = точно по кругу, 0.8 = чуть меньше)")]
+        [field: SerializeField, Range(0.5f, 1.2f)] public float ClickRadiusMultiplier = 0.9f;
+        [Tooltip("Максимальное количество попыток генерации уникального неправильного ответа")]
+        [field: SerializeField] public int MaxWrongAnswerAttempts = 20;
+
+        [Header("Эффекты")]
+        [Tooltip("Префаб партикл системы для эффекта лопания")]
+        [field: SerializeField] public ParticleSystem PopEffectPrefab;
+        [Tooltip("Звук лопания шарика")]
+        [field: SerializeField] public SoundType PopSoundType;
         
         /// <summary>
         /// Получить цвет для шарика на основе настроек режима
@@ -119,6 +148,38 @@ namespace MathGame.Configs
         private Color GetSequentialColor(int index)
         {
             return balloonColors[index % balloonColors.Length];
+        }
+        
+        /// <summary>
+        /// Получить настройки для указанного уровня сложности
+        /// </summary>
+        public BalloonDifficultySettings GetDifficultySettings(DifficultyLevel difficulty)
+        {
+            // Ищем настройки для указанного уровня в массиве
+            foreach (var settings in DifficultySettings)
+            {
+                if (settings.DifficultyLevel == difficulty)
+                {
+                    return settings;
+                }
+            }
+            
+            // Если не нашли, возвращаем первый элемент или создаем дефолтный
+            if (DifficultySettings != null && DifficultySettings.Length > 0)
+            {
+                return DifficultySettings[0];
+            }
+            
+            // Fallback на дефолтные настройки
+            return new BalloonDifficultySettings
+            {
+                DifficultyLevel = DifficultyLevel.Medium,
+                RoundTime = 30f,
+                Lives = 3,
+                MinGravity = 7f,
+                MaxGravity = 12f,
+                Drag = 0.5f
+            };
         }
     }
 }

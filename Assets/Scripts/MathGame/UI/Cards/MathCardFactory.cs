@@ -22,40 +22,21 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Создать карточку для указанного режима ответа
         /// </summary>
-        public BaseMathCard CreateCard(AnswerMode answerMode)
+        public BaseMathCard CreateCard(GameType gameType)
         {
-            // Уничтожаем предыдущую карточку
             DestroyCurrentCard();
 
-            // Создаем новую карточку в зависимости от режима
-            BaseMathCard cardPrefab = GetCardPrefab(answerMode);
+            var cardPrefab = GetCardPrefab(gameType);
             
             if (cardPrefab == null)
             {
-                Debug.LogError($"MathCardFactory: Префаб для режима {answerMode} не найден!");
+                Debug.LogError($"MathCardFactory: Префаб для режима {gameType} не найден!");
                 return null;
             }
 
-            // Инстанцируем карточку
             _currentCard = Instantiate(cardPrefab, _cardContainer);
             
             return _currentCard;
-        }
-
-        /// <summary>
-        /// Получить текущую активную карточку
-        /// </summary>
-        public BaseMathCard GetCurrentCard()
-        {
-            return _currentCard;
-        }
-
-        /// <summary>
-        /// Проверить, есть ли активная карточка
-        /// </summary>
-        public bool HasActiveCard()
-        {
-            return _currentCard != null;
         }
 
         /// <summary>
@@ -73,61 +54,20 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Получить префаб карточки для указанного режима
         /// </summary>
-        private BaseMathCard GetCardPrefab(AnswerMode answerMode)
+        private BaseMathCard GetCardPrefab(GameType gameType)
         {
-            return answerMode switch
+            return gameType switch
             {
-                AnswerMode.MultipleChoice => _multipleChoiceCardPrefab,
-                AnswerMode.TextInput => _textInputCardPrefab,
-                AnswerMode.Flash => _flashCardPrefab,
+                GameType.AnswerMathCards => _multipleChoiceCardPrefab,
+                GameType.InputMathCards => _textInputCardPrefab,
+                GameType.FlashMathCards => _flashCardPrefab,
                 _ => null
             };
-        }
-
-        /// <summary>
-        /// Проверить, настроены ли все префабы
-        /// </summary>
-        public bool AreAllPrefabsAssigned()
-        {
-            return _multipleChoiceCardPrefab != null && 
-                   _textInputCardPrefab != null && 
-                   _flashCardPrefab != null;
-        }
-
-        /// <summary>
-        /// Получить названия отсутствующих префабов
-        /// </summary>
-        public string GetMissingPrefabsInfo()
-        {
-            var missing = new System.Collections.Generic.List<string>();
-            
-            if (_multipleChoiceCardPrefab == null) missing.Add("MultipleChoice");
-            if (_textInputCardPrefab == null) missing.Add("TextInput");
-            if (_flashCardPrefab == null) missing.Add("Flash");
-
-            return missing.Count > 0 ? $"Отсутствуют префабы: {string.Join(", ", missing)}" : "Все префабы назначены";
         }
 
         private void OnDestroy()
         {
             DestroyCurrentCard();
         }
-
-        #region Editor Helpers
-
-#if UNITY_EDITOR
-        [Header("Editor Tools")]
-        [SerializeField] private bool _showDebugInfo = false;
-
-        private void OnValidate()
-        {
-            if (_showDebugInfo)
-            {
-                Debug.Log($"MathCardFactory: {GetMissingPrefabsInfo()}");
-            }
-        }
-#endif
-
-        #endregion
     }
 }

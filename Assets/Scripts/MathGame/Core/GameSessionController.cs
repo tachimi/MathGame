@@ -20,7 +20,6 @@ namespace MathGame.Core
         private Question _currentQuestion;
         private DateTime _questionStartTime;
 
-        // Конструктор для DI
         public GameSessionController(QuestionGenerator generator)
         {
             _generator = generator;
@@ -35,12 +34,13 @@ namespace MathGame.Core
         
         public void StartSession()
         {
-            _sessionResult = new GameSessionResult();
-            _sessionResult.StartTime = DateTime.Now;
-            _sessionResult.GameSettings = _settings; // Сохраняем настройки
+            _sessionResult = new GameSessionResult
+            {
+                StartTime = DateTime.Now,
+                GameSettings = _settings 
+            };
             CurrentQuestionIndex = 0;
             
-            // Сбрасываем состояние генератора для новой сессии
             _generator.ResetSession();
             
             GenerateNextQuestion();

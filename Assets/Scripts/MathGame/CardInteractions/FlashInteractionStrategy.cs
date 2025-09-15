@@ -158,9 +158,14 @@ namespace MathGame.CardInteractions
             }
             
             // Подписываемся на событие завершения анимации для выбора ответа
+            // НЕ переопределяем OnSwipeUp, а добавляем к нему
+            System.Action originalOnSwipeUp = _card.OnSwipeUp;
             _card.OnSwipeUp = () => {
                 Debug.Log("FlashInteractionStrategy: Animation completed, selecting answer");
                 _card.SelectAnswer(correctAnswer);
+                
+                // Вызываем оригинальные обработчики
+                originalOnSwipeUp?.Invoke();
             };
             
             Debug.Log("FlashInteractionStrategy: Starting PlaySwipeUpAnimationAsync");
@@ -179,8 +184,14 @@ namespace MathGame.CardInteractions
             }
             
             // Подписываемся на событие завершения анимации для выбора ответа
+            // НЕ переопределяем OnSwipeDown, а добавляем к нему
+            System.Action originalOnSwipeDown = _card.OnSwipeDown;
             _card.OnSwipeDown = () => {
+                Debug.Log("FlashInteractionStrategy: Swipe down animation completed, selecting answer");
                 _card.SelectAnswer(-1); // Неправильный ответ
+                
+                // Вызываем оригинальные обработчики
+                originalOnSwipeDown?.Invoke();
             };
             
             // Запускаем анимацию исчезновения вниз

@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 5069475283770241242}
   - component: {fileID: 7550041052858440701}
   - component: {fileID: 7374103839527047663}
+  - component: {fileID: -5914503981920918308}
   m_Layer: 5
   m_Name: QuestionsCountButton
   m_TagString: Untagged
@@ -276,3 +277,18 @@ MonoBehaviour:
   _normalTextColor: {r: 0, g: 0, b: 0, a: 0}
   _selectedTextColor: {r: 1, g: 1, b: 1, a: 0}
   _questionCount: 5
+--- !u!114 &-5914503981920918308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7951612039902669638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 308a2feaee15cab4b8a3f57ea766f923, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _soundType: 1
+  _loop: 0
+  _pitch: {x: 0.8, y: 1.2}

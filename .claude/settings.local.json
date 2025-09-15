@@ -9,7 +9,25 @@
       "Bash(git push:*)",
       "Bash(dir)",
       "Bash(grep:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Screens/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\GameModes\\Balloons/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\GameModes\\Balloons/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\GameModes\\Balloons\\BalloonsSystem/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\GameModes\\Balloons\\BalloonsSystem/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Configs/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Enums/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Enums/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\GameModes\\Balloons/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Questions/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Core/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Screens/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Screens/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Models/**)",
+      "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Screens/**)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(ren:*)"
     ],
     "defaultMode": "acceptEdits"
   }

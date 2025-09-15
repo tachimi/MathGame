@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using MathGame.Configs;
 using MathGame.Utils;
+using SoundSystem.Enums;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,6 +20,8 @@ namespace MathGame.GameModes.Balloons
         public event Action<BalloonAnswer, int, bool> OnBalloonTapped;
         public event Action<BalloonAnswer> OnBalloonDestroyed;
         public event Action<BalloonAnswer, int, bool> OnBalloonReachedTop;
+        public event Action<BalloonAnswer, Vector3, Color> OnBalloonPopped;
+        public event Action<SoundType> OnPlaySound;
 
         public RectTransform RectTransform => _rectTransform;
 
@@ -26,94 +29,56 @@ namespace MathGame.GameModes.Balloons
         [SerializeField] private Image _balloonImage;
         [SerializeField] private TextMeshProUGUI _answerText;
         [SerializeField] private RectTransform _rectTransform;
+        [SerializeField] private Rigidbody2D _rigidbody2D;
         
         [Header("Animation Settings")]
         [SerializeField] private float _popAnimationDuration = 0.5f;
         [SerializeField] private AnimationCurve _popScaleCurve = AnimationCurve.EaseInOut(0, 1, 1, 0);
-        [SerializeField] private AnimationCurve _floatCurve = AnimationCurve.Linear(0, 0, 1, 1);
         
+        private BalloonDifficultySettings _difficultySettings;
         private BalloonModeConfig _config;
-        private Vector3 _targetPosition;
-        private CancellationTokenSource _movementCancellation;
         private CancellationTokenSource _animationCancellation;
         private int _answer;
         private bool _isCorrect;
-        private float _speed;
         private bool _isPopped;
-        private bool _isMoving;
         private bool _interactionEnabled = true;
+        private bool _boundsCheckEnabled = true;
         
         public int Answer => _answer;
         public bool IsCorrectAnswer => _isCorrect;
         public bool IsPopped => _isPopped;
         
-        private void Awake()
-        {
-            SetupComponents();
-        }
-        
-        /// <summary>
-        /// Настройка компонентов шарика
-        /// </summary>
-        private void SetupComponents()
-        {
-        }
-        
         /// <summary>
         /// Инициализация шарика с параметрами
         /// </summary>
-        public void Initialize(int answer, bool isCorrect, float speed, BalloonModeConfig config, Color balloonColor)
+        public void Initialize(int answer, bool isCorrect, BalloonModeConfig config, Color balloonColor, BalloonDifficultySettings difficultySettings, float customGravity = -1f, float customDrag = -1f)
         {
             _answer = answer;
             _isCorrect = isCorrect;
-            _speed = speed;
             _config = config;
+            _difficultySettings = difficultySettings;
             _isPopped = false;
-            _isMoving = false;
             _interactionEnabled = true;
-            
-            // Обновляем текст ответа
-            if (_answerText != null)
-                _answerText.text = answer.ToString();
-            
-            // Устанавливаем цвет шарика из параметра
-            if (_balloonImage != null)
-            {
-                _balloonImage.color = balloonColor;
-            }
-            
-            // Позиция устанавливается спавнером, просто запускаем движение
-            StartMovement();
-            
-            Debug.Log($"BalloonAnswer: Инициализирован шарик с ответом {answer}, правильный: {isCorrect}, цвет: {balloonColor}");
+            _answerText.text = answer.ToString();
+            _balloonImage.color = balloonColor;
+            SetupPhysics(customGravity, customDrag);
         }
         
         /// <summary>
-        /// Настроить целевую позицию для движения
+        /// Настройка физики для шарика
         /// </summary>
-        private void SetupTargetPosition()
+        private void SetupPhysics(float customGravity = -1f, float customDrag = -1f)
         {
-            // Движемся вверх от текущей позиции
-            var canvasRect = GetCanvasRect();
-            var currentPos = _rectTransform.anchoredPosition;
-            _targetPosition = new Vector3(currentPos.x, canvasRect.height * 0.6f, 0);
-        }
-        
-        /// <summary>
-        /// Запуск движения шарика
-        /// </summary>
-        private void StartMovement()
-        {
-            _isMoving = true;
-            
-            // Настраиваем целевую позицию
-            SetupTargetPosition();
-            
-            // Создаем токен отмены для движения
-            _movementCancellation = new CancellationTokenSource();
-            
-            // Запускаем асинхронное движение
-            MoveBalloonAsync(_movementCancellation.Token).Forget();
+            // Устанавливаем гравитацию (кастомную или из настроек)
+            var gravity = customGravity > 0 ? customGravity : _difficultySettings.Gravity;
+            _rigidbody2D.gravityScale = -gravity; // Отрицательная - шары замедляются при полете вверх
+
+            // Устанавливаем сопротивление воздуха
+            var drag = customDrag >= 0 ? customDrag : _difficultySettings.Drag;
+            _rigidbody2D.drag = drag;
+
+            // Запрещаем вращение
+            _rigidbody2D.freezeRotation = true;
         }
         
         /// <summary>
@@ -121,8 +86,22 @@ namespace MathGame.GameModes.Balloons
         /// </summary>
         public void StopMovement()
         {
-            _isMoving = false;
-            _movementCancellation?.Cancel();
+            if (_rigidbody2D != null)
+            {
+                _rigidbody2D.velocity = Vector2.zero;
+                _rigidbody2D.gravityScale = 0f; // Отключаем гравитацию
+            }
+        }
+
+        /// <summary>
+        /// Плавно исчезнуть за указанное время
+        /// </summary>
+        public void FadeOut()
+        {
+            if (_isPopped) return;
+
+            // Воспроизводим анимацию лопания без эффектов
+            PlayPopAnimation(false);
         }
         
         /// <summary>
@@ -132,47 +111,35 @@ namespace MathGame.GameModes.Balloons
         {
             _interactionEnabled = false;
         }
+
+        /// <summary>
+        /// Добавить начальную силу к шарику
+        /// </summary>
+        public void AddInitialForce(Vector2 force)
+        {
+            _rigidbody2D.AddForce(force, ForceMode2D.Impulse);
+        }
         
         /// <summary>
-        /// Асинхронное движение шарика
+        /// Проверка границ экрана и автоматическое лопание
         /// </summary>
-        private async UniTaskVoid MoveBalloonAsync(CancellationToken cancellationToken)
+        private void Update()
         {
-            var startPosition = _rectTransform.anchoredPosition;
-            float journeyLength = Vector3.Distance(startPosition, _targetPosition);
-            float journeyTime = journeyLength / _speed;
-            float journey = 0f;
+            // Быстрая проверка на необходимость выполнения
+            if (!_boundsCheckEnabled || _isPopped || !_interactionEnabled || this == null || _config == null)
+                return;
             
-            while (journey <= journeyTime && !_isPopped && _isMoving && !cancellationToken.IsCancellationRequested)
+            // Проверяем выход за верхнюю границу экрана (шарик улетел вверх)
+            if (UIScreenBounds.IsAboveScreen(_rectTransform, _config.ScreenBoundsPadding))
             {
-                float fractionOfJourney = journey / journeyTime;
-                float easedProgress = _floatCurve.Evaluate(fractionOfJourney);
+                // Отключаем дальнейшие проверки границ
+                _boundsCheckEnabled = false;
                 
-                _rectTransform.anchoredPosition = Vector2.Lerp(startPosition, _targetPosition, easedProgress);
+                // Уведомляем о достижении верхней границы (шарик улетел вверх)
+                OnBalloonReachedTop?.Invoke(this, _answer, _isCorrect);
                 
-                // Проверяем выход за границы экрана
-                bool shouldAutoPop = false;
-                
-                if (_config != null)
-                {
-                    shouldAutoPop = UIScreenBounds.IsAboveScreen(_rectTransform, _config.ScreenBoundsPadding);
-                }
-                if (shouldAutoPop)
-                {
-                    Debug.Log($"BalloonAnswer: Шарик {_answer} вышел за границы экрана");
-                    
-                    // Уведомляем о достижении верхней границы
-                    OnBalloonReachedTop?.Invoke(this, _answer, _isCorrect);
-                    
-                    // Лопаем шарик
-                    PlayPopAnimation();
-                    
-                    // Прерываем движение
-                    return;
-                }
-                
-                journey += Time.deltaTime;
-                await UniTask.NextFrame(cancellationToken);
+                // Лопаем шарик
+                PlayPopAnimation();
             }
         }
         
@@ -182,33 +149,64 @@ namespace MathGame.GameModes.Balloons
         /// </summary>
         public void OnPointerClick(PointerEventData eventData)
         {
-            Debug.Log($"BalloonAnswer: Попытка клика на шарик {_answer}. Popped: {_isPopped}, InteractionEnabled: {_interactionEnabled}");
-            
-            if (_isPopped || !_interactionEnabled) 
+            if (_isPopped || !_interactionEnabled)
             {
-                Debug.Log($"BalloonAnswer: Клик игнорирован для шарика {_answer}");
                 return;
             }
-            
-            Debug.Log($"BalloonAnswer: Шарик нажат - ответ {_answer}, правильный: {_isCorrect}");
-            
+
+            // Проверяем, что клик действительно попал в круглую область шарика
+            if (!IsClickInsideCircle(eventData))
+            {
+                return;
+            }
+
             // Уведомляем о нажатии
             OnBalloonTapped?.Invoke(this, _answer, _isCorrect);
+        }
+
+        /// <summary>
+        /// Проверяет, попал ли клик в круглую область шарика
+        /// </summary>
+        private bool IsClickInsideCircle(PointerEventData eventData)
+        {
+            // Получаем позицию клика в локальных координатах
+            Vector2 localClickPosition;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _rectTransform,
+                eventData.position,
+                eventData.pressEventCamera,
+                out localClickPosition
+            );
+
+            // Получаем радиус шарика с учетом настройки из конфига
+            float baseRadius = Mathf.Min(_rectTransform.rect.width, _rectTransform.rect.height) * 0.5f;
+            float clickRadius = baseRadius * (_config?.ClickRadiusMultiplier ?? 0.9f);
+
+            // Проверяем расстояние от центра до точки клика
+            float distanceFromCenter = Vector2.Distance(Vector2.zero, localClickPosition);
+
+            return distanceFromCenter <= clickRadius;
         }
         
         /// <summary>
         /// Анимация лопания шарика
         /// </summary>
-        public void PlayPopAnimation()
+        public void PlayPopAnimation(bool withEffects = true)
         {
-            if (_isPopped) return;
-            
+            if (_isPopped || this == null) return;
+
             _isPopped = true;
-            _isMoving = false;
-            
+
             // Останавливаем движение
-            _movementCancellation?.Cancel();
-            
+            StopMovement();
+
+            // Вызываем события для эффектов и звука только если нужно
+            if (withEffects)
+            {
+                OnBalloonPopped?.Invoke(this, transform.position, _balloonImage.color);
+                OnPlaySound?.Invoke(_config.PopSoundType);
+            }
+
             PopAnimationAsync().Forget();
         }
         
@@ -217,46 +215,56 @@ namespace MathGame.GameModes.Balloons
         /// </summary>
         private async UniTaskVoid PopAnimationAsync()
         {
-            float elapsed = 0f;
-            Vector3 originalScale = transform.localScale;
-            
-            while (elapsed < _popAnimationDuration)
+            try
             {
-                // Проверяем, что объект еще существует
-                if (this == null || transform == null)
-                    return;
+                float elapsed = 0f;
+                Vector3 originalScale = transform.localScale;
+                
+                while (elapsed < _popAnimationDuration)
+                {
+                    // Проверяем, что объект еще существует
+                    if (this == null || transform == null || gameObject == null)
+                        return;
+                        
+                    elapsed += Time.deltaTime;
+                    float progress = elapsed / _popAnimationDuration;
+                    float scaleMultiplier = _popScaleCurve.Evaluate(progress);
                     
-                elapsed += Time.deltaTime;
-                float progress = elapsed / _popAnimationDuration;
-                float scaleMultiplier = _popScaleCurve.Evaluate(progress);
-                
-                transform.localScale = originalScale * scaleMultiplier;
-                
-                // Постепенно делаем прозрачным
-                if (_balloonImage != null)
-                {
-                    var color = _balloonImage.color;
-                    color.a = 1f - progress;
-                    _balloonImage.color = color;
+                    // Проверяем перед использованием transform
+                    if (transform != null)
+                        transform.localScale = originalScale * scaleMultiplier;
+                    
+                    // Постепенно делаем прозрачным
+                    if (_balloonImage != null)
+                    {
+                        var color = _balloonImage.color;
+                        color.a = 1f - progress;
+                        _balloonImage.color = color;
+                    }
+                    
+                    if (_answerText != null)
+                    {
+                        var textColor = _answerText.color;
+                        textColor.a = 1f - progress;
+                        _answerText.color = textColor;
+                    }
+                    
+                    await UniTask.NextFrame();
                 }
                 
-                if (_answerText != null)
+                // Уничтожаем после анимации
+                if (this != null && gameObject != null)
                 {
-                    var textColor = _answerText.color;
-                    textColor.a = 1f - progress;
-                    _answerText.color = textColor;
+                    DestroyBalloon();
                 }
-                
-                await UniTask.NextFrame();
             }
-            
-            // Уничтожаем после анимации
-            if (this != null)
+            catch (MissingReferenceException)
             {
-                DestroyBalloon();
+                // Объект был уничтожен - это нормально, просто выходим
+                return;
             }
         }
-        
+
         /// <summary>
         /// Показать что это был правильный ответ (подсветка)
         /// </summary>
@@ -348,27 +356,9 @@ namespace MathGame.GameModes.Balloons
             Destroy(gameObject);
         }
         
-        
-        /// <summary>
-        /// Получить размеры Canvas
-        /// </summary>
-        private Rect GetCanvasRect()
-        {
-            var canvas = GetComponentInParent<Canvas>();
-            if (canvas != null)
-            {
-                return canvas.GetComponent<RectTransform>().rect;
-            }
-            
-            // Fallback размеры
-            return new Rect(0, 0, 1920, 1080);
-        }
-        
         private void OnDestroy()
         {
             // Отменяем все анимации
-            _movementCancellation?.Cancel();
-            _movementCancellation?.Dispose();
             _animationCancellation?.Cancel();
             _animationCancellation?.Dispose();
         }

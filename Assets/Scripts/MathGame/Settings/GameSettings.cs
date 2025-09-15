@@ -23,23 +23,18 @@ namespace MathGame.Settings
         /// Количество вопросов (из глобальных настроек)
         /// </summary>
         public int QuestionsCount { get; set; } = 10;
-        
-        /// <summary>
-        /// Режим ответа (из глобальных настроек)
-        /// </summary>
-        public AnswerMode AnswerMode { get; set; } = AnswerMode.MultipleChoice;
-        
-        /// <summary>
-        /// Тип игрового режима (Cards, Balloons, Grid)
-        /// </summary>
-        public GameType GameType { get; set; } = GameType.Cards;
-        
+
         #endregion
         
         #region Настройки игровой сессии (выбранные пользователем)
+                
+        /// <summary>
+        /// Тип игрового режима (из MainMenu)
+        /// </summary>
+        public GameType GameType { get; set; }
         
         /// <summary>
-        /// Выбранные математические операции (из MainMenu)
+        /// Выбранные математические операции (из OperationSelection)
         /// </summary>
         public List<MathOperation> EnabledOperations { get; set; } = new List<MathOperation>();
         
@@ -65,12 +60,11 @@ namespace MathGame.Settings
         /// <summary>
         /// Конструктор с явными параметрами
         /// </summary>
-        public GameSettings(DifficultyLevel difficulty, int questionsCount, AnswerMode answerMode)
+        public GameSettings(DifficultyLevel difficulty, int questionsCount)
         {
             Difficulty = difficulty;
             QuestionsCount = questionsCount;
-            AnswerMode = answerMode;
-            GameType = GameType.Cards; // По умолчанию карточки
+            GameType = GameType.AnswerMathCards; // По умолчанию карточки
             EnabledOperations = new List<MathOperation>();
             NumberRanges = new List<NumberRange>();
         }
@@ -85,7 +79,6 @@ namespace MathGame.Settings
             // Копируем глобальные настройки
             Difficulty = source.Difficulty;
             QuestionsCount = source.QuestionsCount;
-            AnswerMode = source.AnswerMode;
             GameType = source.GameType;
             
             // Копируем настройки сессии
@@ -103,10 +96,7 @@ namespace MathGame.Settings
         public static GameSettings CreateWithGlobalSettings()
         {
             var globalSettings = Core.GlobalSettingsManager.LoadGlobalSettings();
-            return new GameSettings(globalSettings.Difficulty, globalSettings.QuestionsCount, globalSettings.AnswerMode)
-            {
-                GameType = globalSettings.GameType
-            };
+            return new GameSettings(globalSettings.Difficulty, globalSettings.QuestionsCount);
         }
         
         /// <summary>
@@ -122,46 +112,14 @@ namespace MathGame.Settings
         
         #endregion
         
-        #region Методы валидации
+        #region Методы добавления
         
-        /// <summary>
-        /// Проверить, готовы ли настройки для запуска игры
-        /// </summary>
-        public bool IsReadyForGame()
+        public static GameSettings AddOperations(List<MathOperation> operations, bool clearCurrent)
         {
-            return EnabledOperations.Count > 0 && NumberRanges.Count > 0;
-        }
-        
-        /// <summary>
-        /// Получить описание текущих настроек
-        /// </summary>
-        public string GetDescription()
-        {
-            return $"Сложность: {Difficulty}, Вопросов: {QuestionsCount}, " +
-                   $"Режим игры: {GameType}, Режим ответа: {AnswerMode}, " +
-                   $"Операций: {EnabledOperations.Count}, Диапазонов: {NumberRanges.Count}";
-        }
-        
-        #endregion
-        
-        #region Обратная совместимость
-        
-        /// <summary>
-        /// Синоним для EnabledOperations (для обратной совместимости с GameConfiguration)
-        /// </summary>
-        public List<MathOperation> SelectedOperations
-        {
-            get => EnabledOperations;
-            set => EnabledOperations = value;
-        }
-        
-        /// <summary>
-        /// Синоним для NumberRanges (для обратной совместимости с GameConfiguration)
-        /// </summary>
-        public List<NumberRange> SelectedRanges
-        {
-            get => NumberRanges;
-            set => NumberRanges = value;
+            var settings = CreateWithGlobalSettings();
+            settings.EnabledOperations.Clear();
+            settings.EnabledOperations.AddRange(operations);
+            return settings;
         }
         
         #endregion
