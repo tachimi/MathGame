@@ -1,18 +1,23 @@
 using System.Collections.Generic;
 using MathGame.Configs;
+using MathGame.Core;
 using MathGame.Enums;
 using MathGame.Models;
-using MathGame.Screens;
 using MathGame.Settings;
+using MathGame.UI;
 using ScreenManager.Core;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
 
-namespace MathGame.UI
+namespace MathGame.Screens
 {
     public class RangeSelectionScreen : UIScreen<GameSettings>
     {
+        [Header("Game Settings")]
+        [SerializeField] private DifficultyDropdown _difficultyDropdown; 
+        [SerializeField] private QuestionCountDropdown _questionCountDropdown;
+
         [Header("Range Buttons Container")]
         [SerializeField] private Transform _rangesContainer;
         [SerializeField] private NumberRangeButton _rangeButtonPrefab;
@@ -20,7 +25,7 @@ namespace MathGame.UI
         [Header("Range Selection")]
         [SerializeField] private RangeSelector _rangeSelector;
 
-        [Header("Navigation")] 
+        [Header("Navigation")]
         [SerializeField] private Button _nextButton;
         [SerializeField] private Button _backButton;
 
@@ -37,6 +42,7 @@ namespace MathGame.UI
         public override void Initialize(GameSettings context)
         {
             _gameSettings = context;
+            SetupInitialValues();
             CreateButtons();
         }
 
@@ -47,8 +53,30 @@ namespace MathGame.UI
             SetupButtons();
         }
 
+        private void SetupInitialValues()
+        {
+            //var globalSettings = GlobalSettingsManager.LoadGlobalSettings();
+
+            _difficultyDropdown.SetDifficulty(_gameSettings.Difficulty);
+
+            if (_gameSettings.GameType == GameType.Balloons)
+            {
+                _questionCountDropdown.gameObject.SetActive(false);
+            }
+            else
+            {
+                _questionCountDropdown.SetQuestionCount(_gameSettings.QuestionsCount);
+            }
+
+            // Применяем значения к игровым настройкам
+            //_gameSettings.Difficulty = globalSettings.Difficulty;
+            //_gameSettings.QuestionsCount = globalSettings.QuestionsCount;
+        }
+
         private void SetupComponents()
         {
+            _difficultyDropdown.OnDifficultyChanged += OnDifficultyChanged;
+            _questionCountDropdown.OnQuestionCountChanged += OnQuestionCountChanged; 
             _rangeSelector.OnSelectionChanged += OnRangeSelectionChanged;
         }
 
@@ -102,6 +130,33 @@ namespace MathGame.UI
                 _rangeButtons.Add(rangeButton);
                 _rangeSelector.AddButton(rangeButton);
             }
+        }
+
+        private void OnDifficultyChanged(DifficultyLevel difficulty)
+        {
+            _gameSettings.Difficulty = difficulty;
+
+            // Сохраняем в глобальные настройки
+            var globalSettings = GlobalSettingsManager.LoadGlobalSettings();
+            globalSettings.Difficulty = difficulty;
+            GlobalSettingsManager.SaveGlobalSettings(globalSettings);
+
+            // Пересоздаем кнопки диапазонов для новой сложности
+            CreateButtons();
+
+            Debug.Log($"RangeSelectionScreen: Difficulty changed to {difficulty}");
+        }
+
+        private void OnQuestionCountChanged(int questionCount)
+        {
+            _gameSettings.QuestionsCount = questionCount;
+
+            // Сохраняем в глобальные настройки
+            var globalSettings = GlobalSettingsManager.LoadGlobalSettings();
+            globalSettings.QuestionsCount = questionCount;
+            GlobalSettingsManager.SaveGlobalSettings(globalSettings);
+
+            Debug.Log($"RangeSelectionScreen: Question count changed to {questionCount}");
         }
 
         private void OnRangeSelectionChanged(List<NumberRange> selectedRanges)
@@ -172,9 +227,18 @@ namespace MathGame.UI
         {
             base.OnDestroy();
 
+            // Очищаем события дропдаунов
+            if (_difficultyDropdown != null)
+                _difficultyDropdown.OnDifficultyChanged -= OnDifficultyChanged;
+
+            if (_questionCountDropdown != null)
+                _questionCountDropdown.OnQuestionCountChanged -= OnQuestionCountChanged;
+
+            // Очищаем события селектора диапазонов
             if (_rangeSelector != null)
                 _rangeSelector.OnSelectionChanged -= OnRangeSelectionChanged;
 
+            // Очищаем события кнопок
             if (_nextButton != null)
                 _nextButton.onClick.RemoveAllListeners();
 

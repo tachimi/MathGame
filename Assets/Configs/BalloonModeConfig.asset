@@ -27,14 +27,14 @@ MonoBehaviour:
   - DifficultyLevel: 1
     RoundTime: 60
     Lives: 2
-    MinGravity: 0.15
-    MaxGravity: 0.2
+    MinGravity: 0.1
+    MaxGravity: 0.15
     Drag: 1
   - DifficultyLevel: 2
     RoundTime: 60
     Lives: 1
-    MinGravity: 0.2
-    MaxGravity: 0.25
+    MinGravity: 0.1
+    MaxGravity: 0.15
     Drag: 1
   balloonColors:
   - {r: 0.82641506, g: 0.21673898, b: 0.21673898, a: 1}
@@ -51,11 +51,6 @@ MonoBehaviour:
   AnswerFeedbackDelay: 1.5
   SafeBoundsPadding: 75
   ClickRadiusMultiplier: 0.9
-  BalloonFriction: 0.1
-  BalloonBounciness: 0.7
   MaxWrongAnswerAttempts: 20
-  EnableBalloonTails: 1
-  WindStrength: 15
-  WindFrequency: 1.5
   PopEffectPrefab: {fileID: 570832250925526149, guid: dcd90c4976197424b9958a7c54b6bb8c, type: 3}
   PopSoundType: 2

@@ -20,16 +20,10 @@ namespace MathGame.UI
         [Header("Visual Components")]
         [SerializeField] private Button _button;
         [SerializeField] private Image _buttonImage;
-        [SerializeField] private TextMeshProUGUI _buttonText;
 
         [Header("Sprites")]
         [SerializeField] private Sprite _onSprite;
         [SerializeField] private Sprite _offSprite;
-
-        [Header("Text Settings")]
-        [SerializeField] private string _onText = "ВКЛ";
-        [SerializeField] private string _offText = "ВЫКЛ";
-        [SerializeField] private string _labelPrefix = "Звук";
 
         private SoundPlayer _soundPlayer;
         private IAsyncPublisher _publisher;
@@ -65,9 +59,6 @@ namespace MathGame.UI
 
             if (_buttonImage == null)
                 _buttonImage = GetComponent<Image>();
-
-            if (_buttonText == null)
-                _buttonText = GetComponentInChildren<TextMeshProUGUI>();
         }
 
         private void SetupEventHandlers()
@@ -120,13 +111,6 @@ namespace MathGame.UI
             if (_buttonImage != null)
             {
                 _buttonImage.sprite = isEnabled ? _onSprite : _offSprite;
-            }
-
-            // Обновляем текст
-            if (_buttonText != null)
-            {
-                string stateText = isEnabled ? _onText : _offText;
-                _buttonText.text = $"{_labelPrefix}: {stateText}";
             }
         }
 
