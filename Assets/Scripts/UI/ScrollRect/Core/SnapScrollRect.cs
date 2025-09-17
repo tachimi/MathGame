@@ -1,6 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 using UI.ScrollRect.PageIndicators;
+using UI.ScrollRect;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -19,18 +20,19 @@ namespace UI.ScrollRect.Core
         [SerializeField] private Button _previousPageButton;
         [SerializeField] private float _snapSpeed = 10f;
         [SerializeField] private float _minSwipeDistance = 5f;
-        [SerializeField] private bool _forgetLastPage;
+        [SerializeField] private ScrollPositionMode _positionMode = ScrollPositionMode.SessionMemory;
+        [SerializeField] private string _scrollKey = "default";
         [SerializeField] private bool _infiniteScroll = true;
 
-        private LastPageKeeper _lastPageKeeper;
+        private SessionScrollKeeper _sessionScrollKeeper;
         private Vector2 _dragStartPosition;
         private int _currentPage;
         private bool _isSnapping;
 
         [Inject]
-        public void Construct(LastPageKeeper lastPageKeeper)
+        public void Construct(SessionScrollKeeper sessionScrollKeeper)
         {
-            _lastPageKeeper = lastPageKeeper;
+            _sessionScrollKeeper = sessionScrollKeeper;
         }
 
         private async void Awake()
@@ -40,17 +42,16 @@ namespace UI.ScrollRect.Core
                 _indicatorController.Initialize(_pages.Length, ref OnPageChanged);
             }
 
-            if (!_forgetLastPage)
-            {
-                _currentPage = Mathf.Clamp(_lastPageKeeper.CurrentPage, 0, _pages.Length - 1);
-            }
+            // Загружаем сохраненную позицию в зависимости от режима
+            _currentPage = GetSavedPosition();
+            _currentPage = Mathf.Clamp(_currentPage, 0, _pages.Length - 1);
 
             if (_currentPage >= 0 && _currentPage < _pages.Length)
             {
                 OnPageChanged?.Invoke(_currentPage, _pages[_currentPage].Name);
             }
 
-            if (!_forgetLastPage)
+            if (_positionMode != ScrollPositionMode.ForgetPosition)
             {
                 await UniTask.NextFrame();
                 SetInitialScrollPosition();
@@ -109,6 +110,7 @@ namespace UI.ScrollRect.Core
             }
 
             _isSnapping = true;
+            SaveCurrentPosition();
         }
 
         private void PreviousPage()
@@ -128,6 +130,7 @@ namespace UI.ScrollRect.Core
             }
 
             _isSnapping = true;
+            SaveCurrentPosition();
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -151,11 +154,13 @@ namespace UI.ScrollRect.Core
                     PreviousPage();
                 }
             }
-
-            if (!_forgetLastPage)
+            else
             {
-                _lastPageKeeper.CurrentPage = _currentPage;
+                // Если свайп недостаточно длинный, возвращаемся к текущей странице
+                SnapToCurrentPage();
             }
+
+            SaveCurrentPosition();
         }
 
         private float GetPagePosition(int pageIndex)
@@ -178,6 +183,50 @@ namespace UI.ScrollRect.Core
 
             return (_pages[pageIndex].RectTransform.anchoredPosition.x - _pages[0].RectTransform.anchoredPosition.x) /
                    totalWidth;
+        }
+
+        /// <summary>
+        /// Получить сохраненную позицию в зависимости от режима
+        /// </summary>
+        private int GetSavedPosition()
+        {
+            return _positionMode switch
+            {
+                ScrollPositionMode.ForgetPosition => 0,
+                ScrollPositionMode.SessionMemory => _sessionScrollKeeper?.GetSessionPosition(_scrollKey) ?? 0,
+                ScrollPositionMode.PersistentMemory => PlayerPrefs.GetInt($"ScrollPosition_{_scrollKey}", 0),
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Сохранить текущую позицию в зависимости от режима
+        /// </summary>
+        private void SaveCurrentPosition()
+        {
+            switch (_positionMode)
+            {
+                case ScrollPositionMode.ForgetPosition:
+                    // Ничего не сохраняем
+                    break;
+
+                case ScrollPositionMode.SessionMemory:
+                    _sessionScrollKeeper?.SetSessionPosition(_scrollKey, _currentPage);
+                    break;
+
+                case ScrollPositionMode.PersistentMemory:
+                    PlayerPrefs.SetInt($"ScrollPosition_{_scrollKey}", _currentPage);
+                    PlayerPrefs.Save();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Привязать скролл к текущей странице (используется при недостаточном свайпе)
+        /// </summary>
+        private void SnapToCurrentPage()
+        {
+            _isSnapping = true;
         }
     }
 }

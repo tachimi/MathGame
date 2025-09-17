@@ -23,16 +23,12 @@ namespace MathGame.DI
                 .AsImplementedInterfaces()
                 .AsSelf();
 
-            builder.Register<LastPageKeeper>(Lifetime.Singleton);
             builder.RegisterInstance(_projectSettingsConfig);
             builder.RegisterInstance(_soundTypeSettings);
             builder.RegisterInstance(_musicTypeSettings);
             builder.RegisterInstance(_volumeSettings);
-            
-            // Register navigation service
-            builder.Register<NavigationService>(Lifetime.Singleton)
-                .AsImplementedInterfaces()
-                .AsSelf();
+
+            builder.Register<SessionScrollKeeper>(Lifetime.Singleton);
 
             builder.RegisterEntryPoint<Bootstrapper>();
         }

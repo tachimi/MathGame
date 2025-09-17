@@ -2204,7 +2204,8 @@ MonoBehaviour:
   _previousPageButton: {fileID: 573977628}
   _snapSpeed: 10
   _minSwipeDistance: 50
-  _forgetLastPage: 0
+  _positionMode: 1
+  _scrollKey: PositionMode
   _infiniteScroll: 0
 --- !u!114 &2092185469
 MonoBehaviour:

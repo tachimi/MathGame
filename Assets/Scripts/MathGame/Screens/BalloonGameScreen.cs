@@ -36,7 +36,6 @@ namespace MathGame.Screens
         [Header("Balloon Game Configuration")]
         [SerializeField] private BalloonModeConfig _balloonConfig;
         [SerializeField] private BalloonEffectsManager _effectsManager;
-        [SerializeField] private ScoreEffectsManager _milestoneManager;
 
         private BalloonGameManager _balloonGameManager;
         private IAsyncPublisher _publisher;
@@ -175,9 +174,6 @@ namespace MathGame.Screens
         private void OnScoreChanged(int currentScore)
         {
             UpdateScoreText(currentScore);
-
-            // Проверяем достижения при изменении счета
-            _milestoneManager?.CheckMilestones(currentScore);
         }
 
         private void OnRoundComplete()
@@ -309,14 +305,7 @@ namespace MathGame.Screens
 
                 _balloonGameManager.Cleanup();
             }
-
-            // Отписываемся от системы достижений
-            if (_milestoneManager != null)
-            {
-                _milestoneManager.OnMilestoneReached -= OnMilestoneReached;
-                _milestoneManager.OnPlaySound -= PlayMilestoneSound;
-            }
-
+            
             // Очищаем UI подписки
             _homeButton?.onClick.RemoveAllListeners();
         }
