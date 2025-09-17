@@ -160,7 +160,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -200, y: 590}
+  m_AnchoredPosition: {x: -100, y: 590}
   m_SizeDelta: {x: 160, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &663396903
@@ -175,9 +175,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 643e1d51a330ec647b11a60a888700b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _audioType: 1
+  _audioType: 0
   _button: {fileID: 663396905}
-  _buttonImage: {fileID: 663396906}
+  _buttonImage: {fileID: 1707125197}
   _onSprite: {fileID: 21300000, guid: 2420c3a179125254fa57f26950103db6, type: 3}
   _offSprite: {fileID: 21300000, guid: ac7841ff589545447a9949dfc39d9596, type: 3}
 --- !u!114 &663396904
@@ -531,8 +531,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _camera: {fileID: 733992183}
-  _difficultySelector: {fileID: 0}
-  _questionCountSelector: {fileID: 0}
   _backButton: {fileID: 1670426672}
   _soundToggleButton: {fileID: 1892344680}
   _musicToggleButton: {fileID: 663396903}
@@ -772,7 +770,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8824404214193413774, guid: b4141c82c61c3754f9b27612e9cf7b56, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -75
+      value: -100
       objectReference: {fileID: 0}
     - target: {fileID: 8824404214193413774, guid: b4141c82c61c3754f9b27612e9cf7b56, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1116,7 +1114,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 200, y: 590}
+  m_AnchoredPosition: {x: 100, y: 590}
   m_SizeDelta: {x: 160, y: 160}
   m_Pivot: {x: 0.5, y: 0.49999997}
 --- !u!114 &1892344680
@@ -1133,7 +1131,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _audioType: 1
   _button: {fileID: 1892344682}
-  _buttonImage: {fileID: 1892344683}
+  _buttonImage: {fileID: 1139720133}
   _onSprite: {fileID: 21300000, guid: 659f660ccf67f774baf01f85a42a0939, type: 3}
   _offSprite: {fileID: 21300000, guid: 339a03c92d619004bb36f68018782d5a, type: 3}
 --- !u!114 &1892344681
@@ -1267,6 +1265,8 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects:
   - {fileID: 718474412}
+  - {fileID: 1892344678}
+  - {fileID: 663396901}
 --- !u!4 &1909596933
 Transform:
   m_ObjectHideFlags: 0

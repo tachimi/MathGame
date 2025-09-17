@@ -16,7 +16,7 @@ namespace MathGame.UI.Results
         [SerializeField] private TextMeshProUGUI _timeText;
 
         [Header("Configuration")]
-        [SerializeField] private ResultPhrasesConfig _phrasesConfig;
+        [SerializeField] private CardPhrasesConfig _phrasesConfig;
 
         /// <summary>
         /// Отобразить результаты режима карточек
@@ -113,7 +113,7 @@ namespace MathGame.UI.Results
         /// <summary>
         /// Установить конфиг фраз (можно вызвать из ResultScreen если нужно)
         /// </summary>
-        public void SetPhrasesConfig(ResultPhrasesConfig config)
+        public void SetPhrasesConfig(CardPhrasesConfig config)
         {
             _phrasesConfig = config;
         }

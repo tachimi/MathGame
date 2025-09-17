@@ -8,7 +8,7 @@ namespace MathGame.Configs
     /// ScriptableObject конфигурация для настройки фраз результатов
     /// </summary>
     [CreateAssetMenu(fileName = "ResultPhrasesConfig", menuName = "MathGame/Result Phrases Config")]
-    public class ResultPhrasesConfig : ScriptableObject
+    public class CardPhrasesConfig : ScriptableObject
     {
         [Serializable]
         public class ResultPhrase

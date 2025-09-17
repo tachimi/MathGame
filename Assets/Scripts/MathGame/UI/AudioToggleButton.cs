@@ -1,3 +1,4 @@
+using MathGame.Utils;
 using SoundSystem.Core;
 using SoundSystem.Events;
 using TMPro;
@@ -37,11 +38,11 @@ namespace MathGame.UI
 
         private void Awake()
         {
-            SetupComponents();
-        }
+            if (_publisher == null || _soundPlayer == null)
+            {
+                TryFindDependencies();
+            }
 
-        private void OnEnable()
-        {
             SetupEventHandlers();
             UpdateButtonState();
         }
@@ -49,16 +50,6 @@ namespace MathGame.UI
         private void OnDisable()
         {
             CleanupEventHandlers();
-        }
-
-        private void SetupComponents()
-        {
-            // Автоматически находим компоненты если не назначены
-            if (_button == null)
-                _button = GetComponent<Button>();
-
-            if (_buttonImage == null)
-                _buttonImage = GetComponent<Image>();
         }
 
         private void SetupEventHandlers()
@@ -77,24 +68,31 @@ namespace MathGame.UI
             }
         }
 
+        private void TryFindDependencies()
+        {
+            if (_publisher == null)
+            {
+                _publisher = DependencyResolver.TryGetPublisher();
+            }
+
+            if (_soundPlayer == null)
+            {
+                _soundPlayer = DependencyResolver.TryGetSoundPlayer();
+            }
+        }
+
         private void OnButtonClicked()
         {
-            if (_soundPlayer == null || _publisher == null) return;
+            var currentState = GetCurrentState();
+            var newState = !currentState;
 
-            bool currentState = GetCurrentState();
-            bool newState = !currentState;
-
-            // Отправляем событие изменения
             _publisher.Publish(new VolumeChangedEvent(_audioType, newState));
 
-            // Обновляем состояние кнопки
             UpdateButtonState();
         }
 
         private bool GetCurrentState()
         {
-            if (_soundPlayer == null) return false;
-
             return _audioType switch
             {
                 AudioType.Sound => _soundPlayer.IsSoundEnabled,
@@ -105,21 +103,8 @@ namespace MathGame.UI
 
         private void UpdateButtonState()
         {
-            bool isEnabled = GetCurrentState();
-
-            // Обновляем спрайт
-            if (_buttonImage != null)
-            {
-                _buttonImage.sprite = isEnabled ? _onSprite : _offSprite;
-            }
-        }
-
-        /// <summary>
-        /// Принудительное обновление состояния кнопки (для внешнего вызова)
-        /// </summary>
-        public void RefreshState()
-        {
-            UpdateButtonState();
+            var isEnabled = GetCurrentState();
+            _buttonImage.sprite = isEnabled ? _onSprite : _offSprite;
         }
     }
 }

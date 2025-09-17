@@ -23,19 +23,19 @@ MonoBehaviour:
     Lives: 3
     MinGravity: 0.1
     MaxGravity: 0.15
-    Drag: 1
+    Drag: 2
   - DifficultyLevel: 1
     RoundTime: 60
     Lives: 2
     MinGravity: 0.1
     MaxGravity: 0.15
-    Drag: 1
+    Drag: 2
   - DifficultyLevel: 2
     RoundTime: 60
     Lives: 1
     MinGravity: 0.1
     MaxGravity: 0.15
-    Drag: 1
+    Drag: 2
   balloonColors:
   - {r: 0.82641506, g: 0.21673898, b: 0.21673898, a: 1}
   - {r: 0.17877528, g: 0.17877528, b: 0.79622644, a: 1}

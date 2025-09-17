@@ -16,7 +16,7 @@ EditorBuildSettings:
     guid: d170723607b4ea14e82ecbd6b73a74d5
   - enabled: 1
     path: Assets/Scenes/RangeSelection.unity
-    guid: 1195788fdd817464c918467a69a191a8
+    guid: 311d73b7bd4c41448b7d0bb6eba5aa6c
   - enabled: 1
     path: Assets/Scenes/CardsGame.unity
     guid: 396d7833507e3a049812e1cba9da8fa7
@@ -28,5 +28,5 @@ EditorBuildSettings:
     guid: e125703d76ad63245a9a5d90cc9c89da
   - enabled: 1
     path: Assets/Scenes/BalloonGame.unity
-    guid: d1cf52ef2d26b0f458b6e2f1ffcfe607
+    guid: 6c08e827b6afe9a42ad380833effb2ed
   m_configObjects: {}

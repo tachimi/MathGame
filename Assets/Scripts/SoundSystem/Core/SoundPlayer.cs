@@ -95,7 +95,7 @@ namespace SoundSystem.Core
         {
             IsMusicEnabled = isEnabled;
             _audioSourceForMusic.mute = !isEnabled;
-
+            
             // Обновляем и сохраняем настройки
             if (_currentVolume != null)
             {
@@ -143,11 +143,9 @@ namespace SoundSystem.Core
             {
                 case AudioType.Music:
                     ToggleMusic(changedEventData.Enabled);
-                    _currentVolume.MusicEnabled = changedEventData.Enabled;
                     break;
                 case AudioType.Sound:
                     ToggleSound(changedEventData.Enabled);
-                    _currentVolume.SoundEnabled = changedEventData.Enabled;
                     break;
             }
         }

@@ -444,12 +444,21 @@ namespace MathGame.GameModes.Balloons
         }
         
         /// <summary>
-        /// Обработчик выступления времени
+        /// Обработчик выступления времени - заканчиваем игру без потери жизней
         /// </summary>
         private void HandleTimeUp()
         {
-            // Вызываем HandleRoundLost для правильной обработки пропуска ответа
-            HandleRoundLost();
+            // Останавливаем таймер и игру
+            _isRoundInProgress = false;
+
+            // Отключаем интерактивность всех шариков
+            DisableAllBalloonsInteractivity();
+
+            // Останавливаем мовмент всех шариков
+            StopAllBalloons();
+
+            // Заканчиваем игру без потери жизней
+            HandleGameOver();
         }
         
         /// <summary>
@@ -539,6 +548,45 @@ namespace MathGame.GameModes.Balloons
         /// Получить время начала игры
         /// </summary>
         public DateTime GetGameStartTime() => _gameStartTime;
+
+        /// <summary>
+        /// Отключить интерактивность всех шариков
+        /// </summary>
+        private void DisableAllBalloonsInteractivity()
+        {
+            if (_balloonsContainer == null) return;
+
+            // Проходим по всем дочерним объектам и отключаем интерактивность
+            for (int i = 0; i < _balloonsContainer.childCount; i++)
+            {
+                var child = _balloonsContainer.GetChild(i);
+                var balloonAnswer = child.GetComponent<BalloonAnswer>();
+                if (balloonAnswer != null)
+                {
+                    balloonAnswer.DisableInteraction();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Остановить движение всех шариков
+        /// </summary>
+        private void StopAllBalloons()
+        {
+            if (_balloonsContainer == null) return;
+
+            // Проходим по всем дочерним объектам и останавливаем движение
+            for (int i = 0; i < _balloonsContainer.childCount; i++)
+            {
+                var child = _balloonsContainer.GetChild(i);
+                var rigidbody = child.GetComponent<Rigidbody2D>();
+                if (rigidbody != null)
+                {
+                    rigidbody.velocity = Vector2.zero;
+                    rigidbody.isKinematic = true;
+                }
+            }
+        }
 
         #endregion
     }

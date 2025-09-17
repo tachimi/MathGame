@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using MathGame.Enums;
 using MathGame.GameModes.Balloons;
 using MathGame.GameModes.Balloons.BalloonsSystem;
@@ -15,6 +17,7 @@ using SoundSystem.Events;
 using UniTaskPubSub;
 using VContainer;
 using MathGame.Services;
+using System;
 
 namespace MathGame.Screens
 {
@@ -116,10 +119,14 @@ namespace MathGame.Screens
         }
 
 
-        private void OnBalloonGameStateChanged(BalloonGameState state)
+        private async void OnBalloonGameStateChanged(BalloonGameState state)
         {
             if (state == BalloonGameState.GameOver)
             {
+                // Добавляем задержку перед переходом на экран результатов
+                var delayMs = (int)(_balloonConfig.AnswerFeedbackDelay * 1000);
+                await UniTask.Delay(delayMs);
+
                 // Игра окончена - показываем результаты
                 var score = _balloonGameManager?.GetCurrentScore() ?? 0;
                 var difficulty = _gameSettings?.Difficulty ?? DifficultyLevel.Easy;
@@ -131,8 +138,8 @@ namespace MathGame.Screens
                 // Создаем результат игровой сессии для режима шариков
                 var result = new BalloonGameSessionResult
                 {
-                    StartTime = _balloonGameManager?.GetGameStartTime() ?? System.DateTime.Now,
-                    EndTime = System.DateTime.Now,
+                    StartTime = _balloonGameManager?.GetGameStartTime() ?? DateTime.Now,
+                    EndTime = DateTime.Now,
                     GameSettings = _gameSettings,
                     CurrentScore = score,
                     HighScore = highScore,
@@ -146,7 +153,7 @@ namespace MathGame.Screens
                     result.Results.Add(new QuestionResult
                     {
                         IsCorrect = true,
-                        TimeSpent = System.TimeSpan.FromSeconds(1) // Фиктивное время
+                        TimeSpent = TimeSpan.FromSeconds(1) // Фиктивное время
                     });
                 }
 
@@ -174,6 +181,7 @@ namespace MathGame.Screens
         private void OnScoreChanged(int currentScore)
         {
             UpdateScoreText(currentScore);
+            AnimateScoreIncrease();
         }
 
         private void OnRoundComplete()
@@ -199,37 +207,6 @@ namespace MathGame.Screens
 
             // Подписываемся на событие звука
             balloon.OnPlaySound += PlayBalloonSound;
-        }
-
-        /// <summary>
-        /// Настройка системы достижений
-        /// </summary>
-      //  private void SetupMilestoneManager()
-      //  {
-      //      if (_milestoneManager == null) return;
-//
-      //      // Подписываемся на события достижений
-      //      _milestoneManager.OnMilestoneReached += OnMilestoneReached;
-      //      _milestoneManager.OnPlaySound += PlayMilestoneSound;
-      //  }
-
-        /// <summary>
-        /// Обработчик достижения милестоуна
-        /// </summary>
-        private void OnMilestoneReached(int threshold)
-        {
-            Debug.Log($"🎉 Milestone reached: {threshold} points!");
-
-            // Здесь можно добавить UI уведомление
-            // Например, показать popup с поздравлением или анимацию текста
-        }
-
-        /// <summary>
-        /// Воспроизвести звук достижения
-        /// </summary>
-        private void PlayMilestoneSound(SoundType soundType)
-        {
-            _publisher.Publish(new SoundEvent(soundType));
         }
 
         /// <summary>
@@ -273,6 +250,60 @@ namespace MathGame.Screens
         {
             if (_scoreText != null)
                 _scoreText.text = score.ToString();
+        }
+
+        /// <summary>
+        /// Анимация увеличения счета при правильном ответе
+        /// </summary>
+        private void AnimateScoreIncrease()
+        {
+            if (_scoreText == null) return;
+
+            // Останавливаем любые предыдущие анимации
+            _scoreText.transform.DOKill();
+
+            // Получаем RectTransform для работы с anchor
+            var rectTransform = _scoreText.rectTransform;
+
+            // Сохраняем исходные значения
+            Vector3 originalScale = rectTransform.localScale;
+            Vector2 originalAnchorMin = rectTransform.anchorMin;
+            Vector2 originalAnchorMax = rectTransform.anchorMax;
+            Vector2 originalPivot = rectTransform.pivot;
+            Vector2 originalAnchoredPosition = rectTransform.anchoredPosition;
+
+            // Устанавливаем anchor и pivot в центр для масштабирования из центра
+            Vector2 centerAnchor = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMin = centerAnchor;
+            rectTransform.anchorMax = centerAnchor;
+            rectTransform.pivot = centerAnchor;
+
+            // Анимация: увеличение до 1.3x за 0.15с, затем возвращение к нормальному размеру за 0.2с
+            Sequence scoreAnimation = DOTween.Sequence();
+
+            scoreAnimation
+                .Append(rectTransform.DOScale(originalScale * 1.3f, 0.15f)
+                    .SetEase(Ease.OutQuad))
+                .Append(rectTransform.DOScale(originalScale, 0.2f)
+                    .SetEase(Ease.InQuad));
+
+            // Добавляем небольшой punch эффект для более динамичной анимации
+            scoreAnimation.Insert(0f, rectTransform.DOPunchPosition(
+                new Vector3(0, 5f, 0), 0.35f, 2, 0.5f));
+
+            // Восстанавливаем исходные anchor и pivot после анимации
+            scoreAnimation.OnComplete(() =>
+            {
+                if (rectTransform != null)
+                {
+                    rectTransform.anchorMin = originalAnchorMin;
+                    rectTransform.anchorMax = originalAnchorMax;
+                    rectTransform.pivot = originalPivot;
+                    rectTransform.anchoredPosition = originalAnchoredPosition;
+                }
+            });
+
+            scoreAnimation.Play();
         }
 
         private void UpdateQuestionText()

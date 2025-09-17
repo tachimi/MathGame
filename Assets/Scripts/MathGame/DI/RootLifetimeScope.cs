@@ -1,6 +1,7 @@
 using Bootstrap;
 using Bootstrap.Configs;
 using MathGame.Services;
+using SoundSystem.Core;
 using SoundSystem.Settings;
 using UI.ScrollRect;
 using UniTaskPubSub;
@@ -12,6 +13,7 @@ namespace MathGame.DI
 {
     public class RootLifetimeScope : LifetimeScope
     {
+        [SerializeField] private SoundPlayer _soundPlayer;
         [SerializeField] private ProjectSettingsConfig _projectSettingsConfig;
         [SerializeField] private SoundTypeSettings _soundTypeSettings;
         [SerializeField] private MusicTypeSettings _musicTypeSettings;
@@ -23,6 +25,7 @@ namespace MathGame.DI
                 .AsImplementedInterfaces()
                 .AsSelf();
 
+            builder.RegisterInstance(_soundPlayer);
             builder.RegisterInstance(_projectSettingsConfig);
             builder.RegisterInstance(_soundTypeSettings);
             builder.RegisterInstance(_musicTypeSettings);

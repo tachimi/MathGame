@@ -692,6 +692,7 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects:
   - {fileID: 1783171936}
+  _soundPlayer: {fileID: 1783171937}
   _projectSettingsConfig: {fileID: 11400000, guid: e68917ed1a8372e4fae237f933076ce1, type: 2}
   _soundTypeSettings: {fileID: 11400000, guid: 19cd42f84a1bf3949b59cb08c1c660f9, type: 2}
   _musicTypeSettings: {fileID: 11400000, guid: 37536804001aed4448b053a4f4f0719e, type: 2}
