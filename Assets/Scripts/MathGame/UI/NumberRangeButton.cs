@@ -76,8 +76,8 @@ namespace MathGame.UI
 
             if (_rangeText != null)
             {
-                _rangeText.fontStyle = _isSelected ? FontStyles.Bold : FontStyles.Normal;
-                _rangeText.color = IsSelected ? _selectedTextColor : _normalTextColor;
+              //  _rangeText.fontStyle = _isSelected ? FontStyles.Bold : FontStyles.Normal;
+              //  _rangeText.color = IsSelected ? _selectedTextColor : _normalTextColor;
             }
         }
 

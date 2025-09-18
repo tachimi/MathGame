@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dfd770b99c199a439462edca4e4c91e, type: 3}
   m_Name: BalloonModeConfig
   m_EditorClassIdentifier: 
-  BalloonPrefab: {fileID: 7234087433626605716, guid: 4a90cdc0db2ed984c9368466bfc0aabc, type: 3}
+  BalloonPrefab: {fileID: 4529493256422776439, guid: 2a08145dee0e03146b618112e00902ab, type: 3}
   BalloonsCount: 12
   SpawnVerticalRandomness: 50
   InitialForceRange: 2
@@ -37,9 +37,9 @@ MonoBehaviour:
     MaxGravity: 0.15
     Drag: 2
   balloonColors:
-  - {r: 0.82641506, g: 0.21673898, b: 0.21673898, a: 1}
-  - {r: 0.17877528, g: 0.17877528, b: 0.79622644, a: 1}
-  - {r: 0.81886786, g: 0.76826954, b: 0.18385892, a: 1}
+  - {r: 0.63529414, g: 0.24313726, b: 0.28235295, a: 1}
+  - {r: 0.27058825, g: 0.30588236, b: 0.61960787, a: 1}
+  - {r: 0.9529412, g: 0.654902, b: 0.07058824, a: 1}
   - {r: 0.79622644, g: 0.11868272, b: 0.79622644, a: 1}
   - {r: 0.16726941, g: 0.7207546, b: 0.7207546, a: 1}
   - {r: 0.79622644, g: 0.49469727, b: 0.19079384, a: 1}

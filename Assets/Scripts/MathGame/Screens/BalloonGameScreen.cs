@@ -259,26 +259,9 @@ namespace MathGame.Screens
         {
             if (_scoreText == null) return;
 
-            // Останавливаем любые предыдущие анимации
             _scoreText.transform.DOKill();
-
-            // Получаем RectTransform для работы с anchor
             var rectTransform = _scoreText.rectTransform;
-
-            // Сохраняем исходные значения
             Vector3 originalScale = rectTransform.localScale;
-            Vector2 originalAnchorMin = rectTransform.anchorMin;
-            Vector2 originalAnchorMax = rectTransform.anchorMax;
-            Vector2 originalPivot = rectTransform.pivot;
-            Vector2 originalAnchoredPosition = rectTransform.anchoredPosition;
-
-            // Устанавливаем anchor и pivot в центр для масштабирования из центра
-            Vector2 centerAnchor = new Vector2(0.5f, 0.5f);
-            rectTransform.anchorMin = centerAnchor;
-            rectTransform.anchorMax = centerAnchor;
-            rectTransform.pivot = centerAnchor;
-
-            // Анимация: увеличение до 1.3x за 0.15с, затем возвращение к нормальному размеру за 0.2с
             Sequence scoreAnimation = DOTween.Sequence();
 
             scoreAnimation
@@ -290,18 +273,6 @@ namespace MathGame.Screens
             // Добавляем небольшой punch эффект для более динамичной анимации
             scoreAnimation.Insert(0f, rectTransform.DOPunchPosition(
                 new Vector3(0, 5f, 0), 0.35f, 2, 0.5f));
-
-            // Восстанавливаем исходные anchor и pivot после анимации
-            scoreAnimation.OnComplete(() =>
-            {
-                if (rectTransform != null)
-                {
-                    rectTransform.anchorMin = originalAnchorMin;
-                    rectTransform.anchorMax = originalAnchorMax;
-                    rectTransform.pivot = originalPivot;
-                    rectTransform.anchoredPosition = originalAnchoredPosition;
-                }
-            });
 
             scoreAnimation.Play();
         }

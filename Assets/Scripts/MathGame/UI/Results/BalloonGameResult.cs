@@ -65,7 +65,6 @@ namespace MathGame.UI.Results
                     // Для нового рекорда показываем специальную фразу
                     _phraseText.gameObject.SetActive(true);
                     _phraseText.text = "Новый рекорд!";
-                    _phraseText.color = Color.yellow; // Особый цвет для нового рекорда
 
                     // Запускаем эффекты частиц для нового рекорда
                     PlayNewRecordParticles();

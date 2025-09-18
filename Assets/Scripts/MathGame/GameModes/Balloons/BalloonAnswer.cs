@@ -26,7 +26,7 @@ namespace MathGame.GameModes.Balloons
         public RectTransform RectTransform => _rectTransform;
 
         [Header("Balloon Components")]
-        [SerializeField] private Image _balloonImage;
+        [SerializeField] private SpriteRenderer _balloonSprite;
         [SerializeField] private TextMeshProUGUI _answerText;
         [SerializeField] private RectTransform _rectTransform;
         [SerializeField] private Rigidbody2D _rigidbody2D;
@@ -60,7 +60,7 @@ namespace MathGame.GameModes.Balloons
             _isPopped = false;
             _interactionEnabled = true;
             _answerText.text = answer.ToString();
-            _balloonImage.color = balloonColor;
+            _balloonSprite.color = balloonColor;
             SetupPhysics(customGravity, customDrag);
         }
         
@@ -203,7 +203,7 @@ namespace MathGame.GameModes.Balloons
             // Вызываем события для эффектов и звука только если нужно
             if (withEffects)
             {
-                OnBalloonPopped?.Invoke(this, transform.position, _balloonImage.color);
+                OnBalloonPopped?.Invoke(this, transform.position, _balloonSprite.color);
                 OnPlaySound?.Invoke(_config.PopSoundType);
             }
 
@@ -235,11 +235,11 @@ namespace MathGame.GameModes.Balloons
                         transform.localScale = originalScale * scaleMultiplier;
                     
                     // Постепенно делаем прозрачным
-                    if (_balloonImage != null)
+                    if (_balloonSprite != null)
                     {
-                        var color = _balloonImage.color;
+                        var color = _balloonSprite.color;
                         color.a = 1f - progress;
-                        _balloonImage.color = color;
+                        _balloonSprite.color = color;
                     }
                     
                     if (_answerText != null)
@@ -270,10 +270,10 @@ namespace MathGame.GameModes.Balloons
         /// </summary>
         public void ShowAsCorrectAnswer()
         {
-            if (_balloonImage != null)
+            if (_balloonSprite != null)
             {
                 // Делаем шарик зеленым
-                _balloonImage.color = Color.green;
+                _balloonSprite.color = Color.green;
             }
             
             if (_answerText != null)
