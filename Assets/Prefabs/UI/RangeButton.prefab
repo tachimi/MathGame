@@ -202,7 +202,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0c6bb8a46504e0e46b8d50035e260909, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e6ca59c192be3e642974c19e00ceb5ba, type: 3}
   m_Type: 1
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -271,7 +271,7 @@ MonoBehaviour:
   _button: {fileID: 664427647130511318}
   _rangeText: {fileID: 6849875953176844401}
   _background: {fileID: 1292696639117440833}
-  _normalSprite: {fileID: 21300000, guid: 0c6bb8a46504e0e46b8d50035e260909, type: 3}
-  _selectedSprite: {fileID: 21300000, guid: 6b8f81e3b2785cb499a6741539bb8468, type: 3}
+  _normalColor: {r: 0.7607843, g: 0.627451, b: 0.53333336, a: 1}
+  _selectedColor: {r: 0.42745098, g: 0.29803923, b: 0.20784314, a: 1}
   _normalTextColor: {r: 0.1254902, g: 0.32941177, b: 0.22745098, a: 1}
   _selectedTextColor: {r: 1, g: 1, b: 1, a: 1}

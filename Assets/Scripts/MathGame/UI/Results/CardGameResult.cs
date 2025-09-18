@@ -61,13 +61,13 @@ namespace MathGame.UI.Results
             }
 
             // Иначе используем значения по умолчанию
-            return GetDefaultPhraseAndColor(accuracy);
+            return (GetDefaultPhraseAndColor(accuracy),Color.white);
         }
 
         /// <summary>
         /// Получить фразу и цвет по умолчанию
         /// </summary>
-        private (string phrase, Color color) GetDefaultPhraseAndColor(float accuracy)
+        private string GetDefaultPhraseAndColor(float accuracy)
         {
             string phrase = accuracy switch
             {
@@ -78,16 +78,7 @@ namespace MathGame.UI.Results
                 _ => "Попробуй снова!"
             };
 
-            Color color = accuracy switch
-            {
-                >= 90 => new Color(0.2f, 0.8f, 0.2f), // Зеленый
-                >= 70 => new Color(0.4f, 0.7f, 0.4f), // Светло-зеленый
-                >= 50 => new Color(1f, 0.8f, 0.2f), // Желтый
-                >= 30 => new Color(1f, 0.5f, 0.2f), // Оранжевый
-                _ => new Color(0.8f, 0.3f, 0.3f) // Красный
-            };
-
-            return (phrase, color);
+            return phrase;
         }
 
         /// <summary>

@@ -4,7 +4,6 @@ using MathGame.GameModes.Cards;
 using MathGame.Models;
 using MathGame.Questions;
 using MathGame.Settings;
-using MathGame.UI;
 using MathGame.UI.Cards;
 using ScreenManager.Core;
 using TMPro;

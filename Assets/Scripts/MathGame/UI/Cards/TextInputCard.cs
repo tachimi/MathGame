@@ -20,6 +20,10 @@ namespace MathGame.UI.Cards
         [Header("Keypad Buttons")]
         [SerializeField] private KeypadButton[] _keypadButtons;
 
+        [Header("Visual settings")]
+        [SerializeField] private Color _correctAnswerColor;
+        [SerializeField] private Color _wrongAnswerColor;
+        
         [Header("Feedback Settings")]
         [SerializeField] private float _feedbackDuration = 2f;
         [SerializeField] private int _maxInputLength = 4;
@@ -194,7 +198,7 @@ namespace MathGame.UI.Cards
             // Показываем зеленый цвет для правильного ответа
             if (_inputDisplay != null)
             {
-                _inputDisplay.color = Color.green;
+                _inputDisplay.color = _correctAnswerColor;
             }
 
             await UniTask.Delay((int)(_feedbackDuration * 1000), cancellationToken: cancellationToken);
@@ -208,7 +212,7 @@ namespace MathGame.UI.Cards
             // Показываем красный цвет для неправильного ответа
             if (_inputDisplay != null)
             {
-                _inputDisplay.color = Color.red;
+                _inputDisplay.color = _wrongAnswerColor;
             }
 
             await UniTask.Delay((int)(_feedbackDuration * 1000), cancellationToken: cancellationToken);
@@ -217,7 +221,7 @@ namespace MathGame.UI.Cards
             if (_inputDisplay != null)
             {
                 _inputDisplay.text = _currentQuestion.CorrectAnswer.ToString();
-                _inputDisplay.color = Color.green;
+                _inputDisplay.color = _correctAnswerColor;
             }
 
             await UniTask.Delay((int)(_feedbackDuration * 1000), cancellationToken: cancellationToken);

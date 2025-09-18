@@ -22,8 +22,8 @@ namespace MathGame.UI
         [SerializeField] private Image _background;
 
         [Header("Visual Settings")]
-        [SerializeField] private Sprite _normalSprite;
-        [SerializeField] private Sprite _selectedSprite;
+        [SerializeField] private Color _normalColor;
+        [SerializeField] private Color _selectedColor;
         [SerializeField] private Color _normalTextColor;
         [SerializeField] private Color _selectedTextColor;
         
@@ -71,7 +71,7 @@ namespace MathGame.UI
         {
             if (_background != null)
             {
-                _background.sprite = _isSelected ? _selectedSprite : _normalSprite;
+                _background.color = _isSelected ? _selectedColor : _normalColor;
             }
 
             if (_rangeText != null)
