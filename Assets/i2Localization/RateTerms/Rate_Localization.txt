@@ -1,0 +1,13 @@
+﻿Key,Type,Desc,English
+Rate/gift_popup_button_v1,Text,,Unlock Now!
+Rate/gift_popup_main_v1,Text,,Unlock all the content as a <color=#FA361F>GIFT!</color> No ads!
+Rate/gift_popup_title_v1,Text,,Special Bonus!
+Rate/rate_popup_button_v1,Text,,Rate Us
+Rate/rate_popup_main_sub_v2,Text,,<color=#FA361F>Rate us</color> and help other parents discover our app
+Rate/rate_popup_main_v1,Text,,You have unlocked all the content. No ads! 
+Rate/rate_popup_tilte_v1,Text,,Awesome!
+Rate/rate_question_appstore,Text,,"Enjoying the app?
+Then rate us."
+locked_content_description,Text,,Unlock all content
+locked_content_title,Text,,Locked
+locked_content_unlock_button,Text,,Unlock

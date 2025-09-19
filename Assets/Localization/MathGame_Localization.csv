@@ -1,0 +1,103 @@
+Key,Type,Desc,English,Russian
+UI/Common/Loading,Text,,Loading...,Загрузка...
+UI/Common/Back,Text,,Back,Назад
+UI/Common/Next,Text,,Next,Далее
+UI/Common/Start,Text,,Start,Начать
+UI/Common/Continue,Text,,Continue,Продолжить
+UI/Common/Exit,Text,,Exit,Выход
+UI/Common/Settings,Text,,Settings,Настройки
+UI/Common/Menu,Text,,Menu,Меню
+UI/Common/Play,Text,,Play,Играть
+UI/Common/Pause,Text,,Pause,Пауза
+UI/Common/Resume,Text,,Resume,Возобновить
+UI/Common/Restart,Text,,Restart,Начать заново
+UI/Common/Score,Text,,Score,Счёт
+UI/Common/Time,Text,,Time,Время
+UI/Common/Progress,Text,,Progress,Прогресс
+UI/Common/Question,Text,,Question,Вопрос
+UI/Common/Answer,Text,,Answer,Ответ
+UI/Common/Correct,Text,,Correct,Правильно
+UI/Common/Wrong,Text,,Wrong,Неправильно
+UI/Common/NewRecord,Text,,New Record!,Новый рекорд!
+UI/Common/BestScore,Text,,Best Score,Лучший результат
+UI/Common/CurrentScore,Text,,Current Score,Текущий счёт
+
+UI/MainMenu/Title,Text,,Math Game,Математическая игра
+UI/MainMenu/Addition,Text,,Addition,Сложение
+UI/MainMenu/Subtraction,Text,,Subtraction,Вычитание
+UI/MainMenu/Multiplication,Text,,Multiplication,Умножение
+UI/MainMenu/Division,Text,,Division,Деление
+
+UI/Settings/Audio,Text,,Audio Settings,Настройки звука
+UI/Settings/Music,Text,,Music,Музыка
+UI/Settings/SoundEffects,Text,,Sound Effects,Звуковые эффекты
+UI/Settings/Volume,Text,,Volume,Громкость
+
+UI/RangeSelection/Title,Text,,Select Range,Выберите диапазон
+UI/RangeSelection/Difficulty,Text,,Difficulty,Сложность
+UI/RangeSelection/QuestionCount,Text,,Questions,Вопросов
+UI/RangeSelection/Easy,Text,,Easy,Лёгкий
+UI/RangeSelection/Medium,Text,,Medium,Средний
+UI/RangeSelection/Hard,Text,,Hard,Сложный
+
+UI/Game/Timer,Text,,Timer,Таймер
+UI/Game/QuestionProgress,Text,,{0}/{1},"{0}/{1}"
+UI/Game/Accuracy,Text,,Accuracy: {0}%,Точность: {0}%
+UI/Game/TimeSpent,Text,,Time: {0},Время: {0}
+UI/Game/EnterAnswer,Text,,Enter your answer,Введите ваш ответ
+UI/Game/ChooseAnswer,Text,,Choose the correct answer,Выберите правильный ответ
+
+UI/Results/Title,Text,,Results,Результаты
+UI/Results/FinalScore,Text,,Final Score,Итоговый счёт
+UI/Results/Accuracy,Text,,Accuracy,Точность
+UI/Results/TotalTime,Text,,Total Time,Общее время
+UI/Results/PlayAgain,Text,,Play Again,Играть снова
+UI/Results/MainMenu,Text,,Main Menu,Главное меню
+
+UI/Keypad/Clear,Text,,Clear,Очистить
+UI/Keypad/Delete,Text,,Delete,Удалить
+UI/Keypad/Submit,Text,,Submit,Подтвердить
+
+UI/Operations/Plus,Text,,+,+
+UI/Operations/Minus,Text,,-,-
+UI/Operations/Multiply,Text,,×,×
+UI/Operations/Divide,Text,,÷,÷
+UI/Operations/Equals,Text,,=,=
+
+Game/BalloonMode/Title,Text,,Balloon Mode,Режим шариков
+Game/BalloonMode/Instructions,Text,,Pop the balloon with the correct answer!,Лопните шарик с правильным ответом!
+
+Game/CardMode/Title,Text,,Card Mode,Режим карточек
+Game/CardMode/Instructions,Text,,Solve the math problems on the cards,Решите математические задачи на карточках
+
+Config/Phrases/Excellent,Text,,Excellent!,Отлично!
+Config/Phrases/Great,Text,,Great!,Замечательно!
+Config/Phrases/Good,Text,,Good!,Хорошо!
+Config/Phrases/NotBad,Text,,Not bad!,Неплохо!
+Config/Phrases/KeepTrying,Text,,Keep trying!,Продолжайте стараться!
+Config/Phrases/DefaultResult,Text,,Great result!,Отличный результат!
+
+Config/BalloonPhrases/Perfect,Text,,Perfect score!,Идеальный счёт!
+Config/BalloonPhrases/Amazing,Text,,Amazing!,Удивительно!
+Config/BalloonPhrases/Wonderful,Text,,Wonderful!,Превосходно!
+Config/BalloonPhrases/VeryGood,Text,,Very good!,Очень хорошо!
+Config/BalloonPhrases/GoodJob,Text,,Good job!,Хорошая работа!
+Config/BalloonPhrases/KeepGoing,Text,,Keep going!,Продолжайте!
+Config/BalloonPhrases/TryAgain,Text,,Try again!,Попробуйте ещё раз!
+
+Config/CardPhrases/Outstanding,Text,,Outstanding!,Выдающийся результат!
+Config/CardPhrases/Fantastic,Text,,Fantastic!,Фантастично!
+Config/CardPhrases/Impressive,Text,,Impressive!,Впечатляюще!
+Config/CardPhrases/WellDone,Text,,Well done!,Хорошо сделано!
+Config/CardPhrases/NiceWork,Text,,Nice work!,Хорошая работа!
+Config/CardPhrases/PracticeMore,Text,,Practice more!,Больше практики!
+
+Error/Generic,Text,,An error occurred,Произошла ошибка
+Error/LoadingFailed,Text,,Failed to load,Не удалось загрузить
+Error/SaveFailed,Text,,Failed to save,Не удалось сохранить
+Error/InvalidInput,Text,,Invalid input,Неверный ввод
+Error/ConnectionFailed,Text,,Connection failed,Соединение не удалось
+
+Debug/ConfigNotAssigned,Text,,Config not assigned in inspector,Конфиг не назначен в инспекторе
+Debug/ComponentNotFound,Text,,Component not found,Компонент не найден
+Debug/InitializationFailed,Text,,Initialization failed,Ошибка инициализации

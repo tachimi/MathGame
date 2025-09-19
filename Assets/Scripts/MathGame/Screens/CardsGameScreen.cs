@@ -136,7 +136,7 @@ namespace MathGame.Screens
                     break;
             }
         }
-
+ 
         private void UpdateProgressText()
         {
             if (_progressText != null && _sessionController != null)

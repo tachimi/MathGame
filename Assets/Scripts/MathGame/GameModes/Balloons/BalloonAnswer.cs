@@ -7,7 +7,6 @@ using SoundSystem.Enums;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace MathGame.GameModes.Balloons
 {
@@ -29,6 +28,7 @@ namespace MathGame.GameModes.Balloons
         [SerializeField] private SpriteRenderer _balloonSprite;
         [SerializeField] private TextMeshProUGUI _answerText;
         [SerializeField] private RectTransform _rectTransform;
+        [SerializeField] private RectTransform _clickDetectionRect;
         [SerializeField] private Rigidbody2D _rigidbody2D;
         
         [Header("Animation Settings")]
@@ -172,14 +172,14 @@ namespace MathGame.GameModes.Balloons
             // Получаем позицию клика в локальных координатах
             Vector2 localClickPosition;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _rectTransform,
+                _clickDetectionRect,
                 eventData.position,
                 eventData.pressEventCamera,
                 out localClickPosition
             );
 
             // Получаем радиус шарика с учетом настройки из конфига
-            float baseRadius = Mathf.Min(_rectTransform.rect.width, _rectTransform.rect.height) * 0.5f;
+            float baseRadius = Mathf.Min(_clickDetectionRect.rect.width, _clickDetectionRect.rect.height) * 0.5f;
             float clickRadius = baseRadius * (_config?.ClickRadiusMultiplier ?? 0.9f);
 
             // Проверяем расстояние от центра до точки клика
