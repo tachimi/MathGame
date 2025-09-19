@@ -14,23 +14,16 @@ namespace MathGame.Configs
         [Serializable]
         public class BalloonScorePhrase
         {
-            [Header("Диапазон счета")]
-            [Tooltip("Минимальный счет для этой фразы")]
+            [Header("Диапазон счета")] [Tooltip("Минимальный счет для этой фразы")]
             public int MinScore = 0;
 
             [Tooltip("Максимальный счет для этой фразы")]
             public int MaxScore = 10;
 
-            [Header("Локализованные фразы")]
-            [Tooltip("Список локализованных фраз для случайного выбора")]
+            [Header("Локализованные фразы")] [Tooltip("Список локализованных фраз для случайного выбора")]
             public List<LocalizedString> LocalizedPhrases = new();
 
-            [Header("Фразы (устаревшие - используйте LocalizedPhrases)")]
-            [Tooltip("Список фраз для случайного выбора - будет заменено на локализацию")]
-            public List<string> Phrases = new();
-
-            [Header("Визуальные настройки")]
-            [Tooltip("Цвет текста для этого диапазона")]
+            [Header("Визуальные настройки")] [Tooltip("Цвет текста для этого диапазона")]
             public Color TextColor = Color.white;
 
             /// <summary>
@@ -59,26 +52,14 @@ namespace MathGame.Configs
                     }
                 }
 
-                // Fallback на старые фразы
-                return GetRandomPhrase();
-            }
-
-            /// <summary>
-            /// Получить случайную фразу из списка (устаревший метод)
-            /// </summary>
-            public string GetRandomPhrase()
-            {
-                if (Phrases == null || Phrases.Count == 0)
-                    return Loc.Get("Config/Phrases/DefaultResult");
-
-                int index = UnityEngine.Random.Range(0, Phrases.Count);
-                return Phrases[index];
+                return "Bad configuration";
             }
         }
 
         [Header("Конфигурация фраз для режима шариков")]
         [SerializeField] private List<BalloonScorePhrase> _scorePhrases = new();
-
+        [SerializeField] private LocalizedString _newRecordPhrase;
+        
         /// <summary>
         /// Получить локализованную фразу и цвет для заданного счета
         /// </summary>
@@ -97,12 +78,9 @@ namespace MathGame.Configs
             return (Loc.Get("Config/Phrases/DefaultResult"), Color.white);
         }
 
-        /// <summary>
-        /// Получить все настроенные диапазоны счета (для отладки)
-        /// </summary>
-        public List<BalloonScorePhrase> GetAllScorePhrases()
+        public string GetNewRecordPhrase()
         {
-            return _scorePhrases;
+            return _newRecordPhrase.GetLocalizedText();
         }
     }
 }

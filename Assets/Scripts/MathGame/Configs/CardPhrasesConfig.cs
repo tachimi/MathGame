@@ -26,10 +26,6 @@ namespace MathGame.Configs
             [Header("Локализованные фразы")]
             [Tooltip("Список локализованных фраз для случайного выбора")]
             public List<LocalizedString> LocalizedPhrases = new();
-
-            [Header("Фразы (устаревшие - используйте LocalizedPhrases)")]
-            [Tooltip("Список фраз для случайного выбора - будет заменено на локализацию")]
-            public List<string> Phrases = new();
             
             [Header("Визуальные настройки")]
             [Tooltip("Цвет текста для этого диапазона")]
@@ -60,16 +56,7 @@ namespace MathGame.Configs
                 }
 
                 // Fallback на старые фразы
-                return GetRandomPhrase();
-            }
-
-            public string GetRandomPhrase()
-            {
-                if (Phrases == null || Phrases.Count == 0)
-                    return Loc.Get("Config/Phrases/DefaultResult");
-
-                int index = UnityEngine.Random.Range(0, Phrases.Count);
-                return Phrases[index];
+                return "Bad configuration";
             }
         }
 
