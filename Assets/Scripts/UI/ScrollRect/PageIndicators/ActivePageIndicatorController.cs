@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 namespace UI.ScrollRect.PageIndicators
@@ -9,12 +8,11 @@ namespace UI.ScrollRect.PageIndicators
     {
         [SerializeField] private ActivePageIndicator _prefab;
         [SerializeField] private RectTransform _container;
-        [SerializeField] private TextMeshProUGUI _pageNameText;
     
         private readonly List<ActivePageIndicator> _indicators = new();
         private ActivePageIndicator _currentIndicator;
 
-        public void Initialize(int pagesCount, ref Action<int, string> onPageChanged)
+        public void Initialize(int pagesCount, ref Action<int> onPageChanged)
         {
             CreateIndicators(pagesCount);
             _currentIndicator = _indicators[0];
@@ -46,16 +44,11 @@ namespace UI.ScrollRect.PageIndicators
             }
         }
 
-        private void HandlePageChanged(int pageIndex, string pageName)
+        private void HandlePageChanged(int pageIndex)
         {
             if (_currentIndicator != null)
             {
                 _currentIndicator.Deactivate();
-            }
-
-            if (pageName != null && _pageNameText != null)
-            {
-                _pageNameText.text = pageName;
             }
 
             if (pageIndex >= 0 && pageIndex < _indicators.Count)

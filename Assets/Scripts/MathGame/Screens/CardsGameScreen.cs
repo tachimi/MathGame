@@ -4,11 +4,13 @@ using MathGame.GameModes.Cards;
 using MathGame.Models;
 using MathGame.Questions;
 using MathGame.Settings;
+using MathGame.Tutorial;
 using MathGame.UI.Cards;
 using ScreenManager.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Cysharp.Threading.Tasks;
 
 namespace MathGame.Screens
 {
@@ -20,6 +22,7 @@ namespace MathGame.Screens
         
         [Header("Game Components")]
         [SerializeField] private MathCardFactory _cardFactory;
+        [SerializeField] private TutorialManager _tutorialManager;
 
         private GameSessionController _sessionController;
         private GameSettings _gameSettings;
@@ -87,8 +90,6 @@ namespace MathGame.Screens
                 // Подписываемся на события
                 _cardGameManager.OnAnswerSelected += OnCardAnswerSelected;
                 _cardGameManager.OnRoundComplete += OnCardRoundComplete;
-                
-                Debug.Log("CardsGameScreen: CardGameManager инициализирован");
             }
             catch (System.Exception ex)
             {
@@ -100,11 +101,13 @@ namespace MathGame.Screens
         {
             if (_cardGameManager != null)
             {
-                // Устанавливаем вопрос в менеджере
-                _cardGameManager.SetQuestion(question);
-                
-                // Начинаем раунд
-                _cardGameManager.StartRound();
+                _cardGameManager.StartRound(question);
+
+                // Запускаем туториал для первого вопроса (если не пройден)
+                if (_sessionController.CurrentQuestionIndex == 0 && _tutorialManager != null)
+                {
+                    StartTutorialAsync();
+                }
             }
             else
             {
@@ -112,6 +115,13 @@ namespace MathGame.Screens
             }
 
             UpdateProgressText();
+        }
+
+        private void StartTutorialAsync()
+        {
+            if (_tutorialManager != null && _cardFactory != null)
+            {
+            }
         }
 
         private void OnQuestionAnswered(QuestionResult result)

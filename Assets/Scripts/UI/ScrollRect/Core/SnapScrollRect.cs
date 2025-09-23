@@ -1,7 +1,6 @@
 using System;
 using Cysharp.Threading.Tasks;
 using UI.ScrollRect.PageIndicators;
-using UI.ScrollRect;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -11,10 +10,10 @@ namespace UI.ScrollRect.Core
 {
     public class SnapScrollRect : MonoBehaviour, IBeginDragHandler, IEndDragHandler
     {
-        public event Action<int, string> OnPageChanged;
+        public event Action<int> OnPageChanged;
 
         [SerializeField] private UnityEngine.UI.ScrollRect _scrollRect;
-        [SerializeField] private ScrollRectPage[] _pages;
+        [SerializeField] private RectTransform[] _elements;
         [SerializeField] private ActivePageIndicatorController _indicatorController;
         [SerializeField] private Button _nextPageButton;
         [SerializeField] private Button _previousPageButton;
@@ -39,16 +38,16 @@ namespace UI.ScrollRect.Core
         {
             if (_indicatorController != null)
             {
-                _indicatorController.Initialize(_pages.Length, ref OnPageChanged);
+                _indicatorController.Initialize(_elements.Length, ref OnPageChanged);
             }
 
             // Загружаем сохраненную позицию в зависимости от режима
             _currentPage = GetSavedPosition();
-            _currentPage = Mathf.Clamp(_currentPage, 0, _pages.Length - 1);
+            _currentPage = Mathf.Clamp(_currentPage, 0, _elements.Length - 1);
 
-            if (_currentPage >= 0 && _currentPage < _pages.Length)
+            if (_currentPage >= 0 && _currentPage < _elements.Length)
             {
-                OnPageChanged?.Invoke(_currentPage, _pages[_currentPage].Name);
+                OnPageChanged?.Invoke(_currentPage);
             }
 
             if (_positionMode != ScrollPositionMode.ForgetPosition)
@@ -97,16 +96,16 @@ namespace UI.ScrollRect.Core
         {
             if (_infiniteScroll)
             {
-                _currentPage = (_currentPage + 1) % _pages.Length;
+                _currentPage = (_currentPage + 1) % _elements.Length;
             }
-            else if (_currentPage < _pages.Length - 1)
+            else if (_currentPage < _elements.Length - 1)
             {
                 _currentPage++;
             }
 
-            if (_currentPage >= 0 && _currentPage < _pages.Length)
+            if (_currentPage >= 0 && _currentPage < _elements.Length)
             {
-                OnPageChanged?.Invoke(_currentPage, _pages[_currentPage].Name);
+                OnPageChanged?.Invoke(_currentPage);
             }
 
             _isSnapping = true;
@@ -117,16 +116,16 @@ namespace UI.ScrollRect.Core
         {
             if (_infiniteScroll)
             {
-                _currentPage = (_currentPage - 1 + _pages.Length) % _pages.Length;
+                _currentPage = (_currentPage - 1 + _elements.Length) % _elements.Length;
             }
             else if (_currentPage > 0)
             {
                 _currentPage--;
             }
 
-            if (_currentPage >= 0 && _currentPage < _pages.Length)
+            if (_currentPage >= 0 && _currentPage < _elements.Length)
             {
-                OnPageChanged?.Invoke(_currentPage, _pages[_currentPage].Name);
+                OnPageChanged?.Invoke(_currentPage);
             }
 
             _isSnapping = true;
@@ -165,23 +164,23 @@ namespace UI.ScrollRect.Core
 
         private float GetPagePosition(int pageIndex)
         {
-            if (pageIndex < 0 || pageIndex >= _pages.Length)
+            if (pageIndex < 0 || pageIndex >= _elements.Length)
             {
                 Debug.LogError($"Некорректный индекс страницы: {pageIndex}");
                 return 0;
             }
 
-            if (_pages.Length == 1)
+            if (_elements.Length == 1)
                 return 0;
 
-            var totalWidth = _pages[^1].RectTransform.anchoredPosition.x - _pages[0].RectTransform.anchoredPosition.x;
+            var totalWidth = _elements[^1].anchoredPosition.x - _elements[0].anchoredPosition.x;
             if (Mathf.Approximately(totalWidth, 0))
             {
                 Debug.LogWarning("Страницы имеют одинаковую позицию по X. Проверьте настройку ScrollRect.");
-                return pageIndex / (float)(_pages.Length - 1);
+                return pageIndex / (float)(_elements.Length - 1);
             }
 
-            return (_pages[pageIndex].RectTransform.anchoredPosition.x - _pages[0].RectTransform.anchoredPosition.x) /
+            return (_elements[pageIndex].anchoredPosition.x - _elements[0].anchoredPosition.x) /
                    totalWidth;
         }
 

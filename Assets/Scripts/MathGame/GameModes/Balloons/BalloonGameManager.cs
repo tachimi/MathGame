@@ -148,7 +148,7 @@ namespace MathGame.GameModes.Balloons
             OnScoreChanged?.Invoke(_correctBalloonsPopped);
 
             // Начинаем сразу (без отсчета)
-            StartGameplayAsync(_cancellationTokenSource.Token).Forget();
+            StartGameplayAsync(_cancellationTokenSource.Token);
         }
 
         public void EndRound()
@@ -227,14 +227,13 @@ namespace MathGame.GameModes.Balloons
             _roundController.OnCorrectAnswerSelected += HandleCorrectAnswerSelected;
             _roundController.OnWrongAnswerSelected += HandleWrongAnswerSelected;
             _roundController.OnRoundLost += HandleRoundLost;
-            _roundController.OnRoundComplete += HandleRoundComplete;
         }
         
 
         /// <summary>
         /// Начать геймплей с таймером
         /// </summary>
-        private async UniTaskVoid StartGameplayAsync(CancellationToken cancellationToken)
+        private void StartGameplayAsync(CancellationToken cancellationToken)
         {
             _roundController.StartRound(); 
             _spawner.SpawnAllBalloons(CurrentQuestion, _currentDifficultySettings);

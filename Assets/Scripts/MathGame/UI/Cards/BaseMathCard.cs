@@ -19,62 +19,49 @@ namespace MathGame.UI.Cards
         public event Action<int> OnAnswerSelected;
         public Action OnSwipeUp;
         public Action OnSwipeDown;
+        
+        public bool IsFlipped => _isFlipped;
+        public Question CurrentQuestion => _currentQuestion;
+        public RectTransform CardContainer => _cardContainer;
+        public bool IsFlipping => _isFlipping;
+        public bool IsPlayingSwipeAnimation => _isPlayingSwipeAnimation;
+        public bool IsPlayingEntryAnimation => _isPlayingEntryAnimation;
+        public Vector2 OriginalCardPosition { get => _originalCardPosition; set => _originalCardPosition = value; }
 
-        [Header("Base Card Components")] [SerializeField]
-        protected RectTransform _cardContainer;
-
+        [Header("Base Card Components")]
+        [SerializeField] protected RectTransform _cardContainer;
         [SerializeField] protected GameObject _frontSide;
         [SerializeField] protected GameObject _backSide;
         [SerializeField] protected TextMeshProUGUI _questionDisplay;
 
-        [Header("Question Display Components")] [SerializeField]
-        protected TextMeshProUGUI _inputDisplay; // Поле ввода/знак вопроса
+        [Header("Question Display Components")]
+        [SerializeField] protected TextMeshProUGUI _inputDisplay; // Поле ввода/знак вопроса
 
-        [Header("Animation Settings")] [SerializeField]
-        protected float _flipDuration = 0.5f;
-
+        [Header("Animation Settings")]
+        [SerializeField] protected float _flipDuration = 0.5f;
         [SerializeField] protected AnimationCurve _flipCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
-        [Header("Swipe Animation Settings")] [SerializeField]
-        protected float _swipeAnimationDuration = 0.3f;
-
+        [Header("Swipe Animation Settings")]
+        [SerializeField] protected float _swipeAnimationDuration = 0.3f;
         [SerializeField] protected AnimationCurve _swipeAnimationCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
         [SerializeField] protected float _swipeUpDistance = 100f;
         [SerializeField] protected float _swipeDownDistance = 100f;
 
-        [Header("Card Entry Animation Settings")] [SerializeField]
-        protected float _entryAnimationDuration = 0.5f;
-
+        [Header("Card Entry Animation Settings")]
+        [SerializeField] protected float _entryAnimationDuration = 0.5f;
         [SerializeField] protected AnimationCurve _entryAnimationCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
         [SerializeField] protected float _entryFromRightDistance = 300f;
 
-
         protected Question _currentQuestion;
+        protected Vector2 _originalCardPosition;
+        protected ICardInteractionStrategy _interactionStrategy;
+        protected CancellationTokenSource _cancellationTokenSource;
         protected bool _isFlipped = false;
         protected bool _isAnswered = false;
         protected bool _isPlayingSwipeAnimation = false;
         protected bool _isPlayingEntryAnimation = false;
         protected bool _isFlipping = false;
 
-        // Strategy pattern for interactions
-        protected ICardInteractionStrategy _interactionStrategy;
-        
-        // Позиция для системы перетаскивания (используется стратегиями)
-        protected Vector2 _originalCardPosition;
-        
-        // CancellationToken для управления UniTask
-        private CancellationTokenSource _cancellationTokenSource;
-
-        public bool IsAnswered => _isAnswered;
-        public bool IsFlipped => _isFlipped;
-        public Question CurrentQuestion => _currentQuestion;
-        
-        // Публичные свойства для доступа стратегий
-        public RectTransform CardContainer => _cardContainer;
-        public bool IsFlipping => _isFlipping;
-        public bool IsPlayingSwipeAnimation => _isPlayingSwipeAnimation;
-        public bool IsPlayingEntryAnimation => _isPlayingEntryAnimation;
-        public Vector2 OriginalCardPosition { get => _originalCardPosition; set => _originalCardPosition = value; }
 
         protected virtual void Awake()
         {
@@ -143,7 +130,6 @@ namespace MathGame.UI.Cards
             if (_frontSide != null) _frontSide.SetActive(true);
             if (_backSide != null) _backSide.SetActive(false);
             _isFlipped = false;
-            Debug.Log($"BaseMathCard.ShowFrontSide: _isFlipped = {_isFlipped}");
         }
 
         /// <summary>
@@ -154,7 +140,6 @@ namespace MathGame.UI.Cards
             if (_frontSide != null) _frontSide.SetActive(false);
             if (_backSide != null) _backSide.SetActive(true);
             _isFlipped = true;
-            Debug.Log($"BaseMathCard.ShowBackSide: _isFlipped = {_isFlipped}");
         }
 
         /// <summary>
@@ -162,15 +147,11 @@ namespace MathGame.UI.Cards
         /// </summary>
         public virtual void FlipCard()
         {
-            Debug.Log($"BaseMathCard.FlipCard: CanFlip={CanFlip()}, _isFlipping={_isFlipping}, _isPlayingSwipeAnimation={_isPlayingSwipeAnimation}, _isPlayingEntryAnimation={_isPlayingEntryAnimation}");
-            
             if (!CanFlip() || _isFlipping || _isPlayingSwipeAnimation || _isPlayingEntryAnimation)
             {
-                Debug.Log("BaseMathCard.FlipCard: Cannot flip - conditions not met");
                 return;
             }
 
-            Debug.Log("BaseMathCard.FlipCard: Starting flip animation");
             FlipCardAnimationAsync(_cancellationTokenSource.Token).Forget();
         }
 
@@ -205,12 +186,10 @@ namespace MathGame.UI.Cards
                 }
 
                 // Переключаем сторону
-                Debug.Log($"BaseMathCard.FlipCardAnimation: Before flip - _isFlipped = {_isFlipped}");
                 if (_isFlipped)
                     ShowFrontSide();
                 else
                     ShowBackSide();
-                Debug.Log($"BaseMathCard.FlipCardAnimation: After flip - _isFlipped = {_isFlipped}");
 
                 elapsed = 0f;
 
@@ -256,65 +235,21 @@ namespace MathGame.UI.Cards
         }
 
         /// <summary>
-        /// Обработка клика по карточке - вызывается стратегией
-        /// </summary>
-        public virtual void OnCardClicked()
-        {
-            _interactionStrategy?.OnCardClicked();
-        }
-
-        /// <summary>
-        /// Обратная связь во время перетаскивания - переопределяется в наследниках
-        /// </summary>
-        /// <param name="dragDistance">Расстояние перетаскивания по Y оси (+ вверх, - вниз)</param>
-        public virtual void OnDragFeedback(float dragDistance)
-        {
-            // Базовая реализация - ничего не делаем
-            // Переопределяется в наследниках для визуальной обратной связи
-        }
-
-        /// <summary>
-        /// Обработка свайпа вверх - вызывается стратегией
-        /// </summary>
-        public virtual void OnSwipeUpDetected()
-        {
-            if (_isPlayingSwipeAnimation || _isPlayingEntryAnimation) return;
-
-            PlaySwipeUpAnimationAsync(_cancellationTokenSource.Token).Forget();
-        }
-
-        /// <summary>
-        /// Обработка свайпа вниз - вызывается стратегией
-        /// </summary>
-        public virtual void OnSwipeDownDetected()
-        {
-            if (_isPlayingSwipeAnimation || _isPlayingEntryAnimation) return;
-
-            PlaySwipeDownAnimationAsync(_cancellationTokenSource.Token).Forget();
-        }
-
-        /// <summary>
         /// Анимация свайпа вверх - улетает за верхний край экрана
         /// </summary>
-        public virtual async UniTask PlaySwipeUpAnimationAsync(CancellationToken cancellationToken = default)
+        public async UniTask PlaySwipeUpAnimationAsync(CancellationToken cancellationToken = default)
         {
             if (_cardContainer == null) 
             {
-                Debug.Log("BaseMathCard: PlaySwipeUpAnimationAsync - _cardContainer is null!");
                 return;
             }
-            
-            Debug.Log($"BaseMathCard: Starting swipe up animation. Duration: {_swipeAnimationDuration}, Distance: {_swipeUpDistance}");
             
             _isPlayingSwipeAnimation = true;
 
             try
             {
-                // Используем текущую anchoredPosition как стартовую точку (после перетаскивания)
                 Vector2 startPosition = _cardContainer.anchoredPosition;
                 Vector2 exitPosition = startPosition + Vector2.up * _swipeUpDistance; // Дополнительное расстояние за экран
-
-                Debug.Log($"BaseMathCard: Animation from {startPosition} to {exitPosition}");
 
                 float elapsed = 0f;
 
@@ -331,22 +266,16 @@ namespace MathGame.UI.Cards
                     {
                         Vector2 currentPos = Vector2.Lerp(startPosition, exitPosition, easedProgress);
                         _cardContainer.anchoredPosition = currentPos;
-                        
-                        if (elapsed % 0.1f < Time.deltaTime) // Log every ~0.1 seconds
-                        {
-                            Debug.Log($"BaseMathCard: Animation progress {progress:F2}, pos: {currentPos}");
-                        }
                     }
 
                     await UniTask.Yield(cancellationToken);
                 }
 
                 if (_cardContainer != null)
+                {
                     _cardContainer.anchoredPosition = exitPosition;
-
-                Debug.Log("BaseMathCard: Swipe up animation completed, invoking OnSwipeUp event");
+                }
                 
-                // Вызываем событие после завершения анимации
                 OnSwipeUp?.Invoke();
             }
             finally
@@ -358,7 +287,7 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Анимация свайпа вниз - улетает за нижний край экрана
         /// </summary>
-        public virtual async UniTask PlaySwipeDownAnimationAsync(CancellationToken cancellationToken = default)
+        public async UniTask PlaySwipeDownAnimationAsync(CancellationToken cancellationToken = default)
         {
             if (_cardContainer == null) return;
             
@@ -403,7 +332,7 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Анимация появления карточки справа
         /// </summary>
-        public virtual async UniTask PlayEntryAnimationAsync(CancellationToken cancellationToken = default)
+        private async UniTask PlayEntryAnimationAsync(CancellationToken cancellationToken = default)
         {
             _isPlayingEntryAnimation = true;
 
@@ -450,7 +379,7 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Сброс позиции карточки для нового вопроса
         /// </summary>
-        protected virtual void ResetCardPosition()
+        protected void ResetCardPosition()
         {
             if (_cardContainer != null)
             {
@@ -469,7 +398,7 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Выбрать ответ
         /// </summary>
-        public virtual void SelectAnswer(int answer)
+        public void SelectAnswer(int answer)
         {
             if (_isAnswered) return;
 
@@ -484,7 +413,7 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Обновить отображение примера
         /// </summary>
-        protected virtual void UpdateQuestionDisplay()
+        protected void UpdateQuestionDisplay()
         {
             if (_questionDisplay != null && _currentQuestion != null)
             {

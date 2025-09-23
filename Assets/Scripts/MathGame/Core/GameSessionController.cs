@@ -39,8 +39,8 @@ namespace MathGame.Core
                 StartTime = DateTime.Now,
                 GameSettings = _settings 
             };
-            CurrentQuestionIndex = 0;
             
+            CurrentQuestionIndex = 0;
             _generator.ResetSession();
             
             GenerateNextQuestion();

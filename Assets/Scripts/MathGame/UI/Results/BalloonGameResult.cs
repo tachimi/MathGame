@@ -67,30 +67,31 @@ namespace MathGame.UI.Results
             // Отображаем лучший счет с логикой отложенного обновления
             if (_highScoreText != null)
             {
-                _highScoreText.gameObject.SetActive(true);
-
                 if (isNewRecord)
-                {
+                { 
+                    _highScoreText.gameObject.SetActive(false);
                     // При новом рекорде показываем старое значение
-                    _highScoreText.text = bestScore.ToString();
+                   // _highScoreText.text = bestScore.ToString();
 
                     // Сохраняем новый рекорд для следующего показа
-                    _hasNewRecordPending = true;
-                    _pendingNewRecord = score;
+                   // _hasNewRecordPending = true;
+                   // _pendingNewRecord = score;
                 }
                 else
                 {
+                    _highScoreText.gameObject.SetActive(true);
+                    _highScoreText.text = bestScore.ToString();
                     // Проверяем, есть ли отложенный рекорд для обновления
-                    if (_hasNewRecordPending)
-                    {
-                        _highScoreText.text = _pendingNewRecord.ToString();
-                        _hasNewRecordPending = false;
-                        _pendingNewRecord = 0;
-                    }
-                    else
-                    {
-                        _highScoreText.text = bestScore.ToString();
-                    }
+                   // if (_hasNewRecordPending)
+                   // {
+                   //     _highScoreText.text = _pendingNewRecord.ToString();
+                   //     _hasNewRecordPending = false;
+                   //     _pendingNewRecord = 0;
+                   // }
+                   // else
+                   // {
+                   //     _highScoreText.text = bestScore.ToString();
+                   // }
                 }
             }
 
@@ -101,7 +102,10 @@ namespace MathGame.UI.Results
                 {
                     // Для нового рекорда показываем специальную фразу
                     _phraseText.gameObject.SetActive(true);
+
                     _phraseText.text = _phrasesConfig.GetNewRecordPhrase();
+                   // var defaultText = _phrasesConfig.GetNewRecordPhrase();
+                   // _phraseText.text = $"{defaultText} \n{score} <s>{bestScore}</s>";
 
                     // Запускаем эффекты частиц для нового рекорда
                     PlayNewRecordParticles();
@@ -217,6 +221,7 @@ namespace MathGame.UI.Results
             // Возвращаем к исходному масштабу
             sequence.Append(_currentScoreText.transform.DOScale(1f, _scoreAnimationDuration * 0.4f)
                 .SetEase(Ease.OutQuad));
+            sequence.SetLoops(3);
 
             // Запускаем последовательность
             sequence.Play();

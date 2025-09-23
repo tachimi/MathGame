@@ -4,6 +4,7 @@ using MathGame.Models;
 using MathGame.Settings;
 using MathGame.UI.Cards;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace MathGame.GameModes.Cards
 {
@@ -52,20 +53,6 @@ namespace MathGame.GameModes.Cards
         #region Public Methods
 
         /// <summary>
-        /// Инициализация через интерфейс IGameMode (фабрика должна быть установлена отдельно)
-        /// </summary>
-        /// <param name="settings">Настройки игры</param>
-        public void Initialize(GameSettings settings)
-        {
-            if (_cardFactory == null)
-            {
-                Debug.LogError("CardGameManager.Initialize: Card factory must be set before initialization!");
-                return;
-            }
-            Initialize(settings, _cardFactory);
-        }
-
-        /// <summary>
         /// Инициализация карточной игры с явной фабрикой (используется в CardsGameScreen)
         /// </summary>
         /// <param name="settings">Настройки игры</param>
@@ -74,46 +61,25 @@ namespace MathGame.GameModes.Cards
         {
             _gameSettings = settings ?? throw new ArgumentNullException(nameof(settings));
             _cardFactory = cardFactory ?? throw new ArgumentNullException(nameof(cardFactory));
-            
-            Debug.Log("CardGameManager: Карточная игра инициализирована");
         }
         
         /// <summary>
         /// Установить новый вопрос и создать карточку
         /// </summary>
         /// <param name="question">Вопрос для отображения</param>
-        public void SetQuestion(Question question)
+        public void StartRound(Question question)
         {
             CurrentQuestion = question ?? throw new ArgumentNullException(nameof(question));
             CreateCardForQuestion();
             IsRoundComplete = false;
-            
-            Debug.Log($"CardGameManager: Установлен вопрос: {question.GetQuestionDisplay()}");
-        }
-        
-        /// <summary>
-        /// Начать раунд (активировать карточку)
-        /// </summary>
-        public void StartRound()
-        {
-            if (_currentCard != null)
-            {
-                // Карточка уже готова и активна
-                Debug.Log("CardGameManager: Раунд начат");
-            }
-            else
-            {
-                Debug.LogWarning("CardGameManager: Нет активной карточки для начала раунда");
-            }
         }
         
         /// <summary>
         /// Завершить раунд
         /// </summary>
-        public void EndRound()
+        private void EndRound()
         {
             IsRoundComplete = true;
-            Debug.Log("CardGameManager: Раунд завершен");
         }
         
         /// <summary>
@@ -123,8 +89,6 @@ namespace MathGame.GameModes.Cards
         {
             UnsubscribeFromCurrentCard();
             CleanupCurrentCard();
-            
-            Debug.Log("CardGameManager: Ресурсы очищены");
         }
         
         #endregion
@@ -149,13 +113,8 @@ namespace MathGame.GameModes.Cards
             _currentCard = _cardFactory.CreateCard(_gameSettings.GameType);
             if (_currentCard != null)
             {
-                // Подписываемся на события карточки
                 SubscribeToCardEvents();
-                
-                // Устанавливаем вопрос на карточку
                 _currentCard.SetQuestion(CurrentQuestion);
-                
-                Debug.Log($"CardGameManager: Создана карточка для вопроса: {CurrentQuestion.GetQuestionDisplay()}");
             }
             else
             {
@@ -197,7 +156,7 @@ namespace MathGame.GameModes.Cards
             if (_currentCard != null)
             {
                 UnsubscribeFromCurrentCard();
-                GameObject.Destroy(_currentCard.gameObject);
+                Object.Destroy(_currentCard.gameObject);
                 _currentCard = null;
             }
         }
@@ -211,7 +170,6 @@ namespace MathGame.GameModes.Cards
         /// </summary>
         private void OnCardAnswerSelected(int selectedAnswer)
         {
-            Debug.Log($"CardGameManager: Выбран ответ: {selectedAnswer}");
             OnAnswerSelected?.Invoke(selectedAnswer);
         }
         
@@ -220,7 +178,6 @@ namespace MathGame.GameModes.Cards
         /// </summary>
         private void OnCardSwipeComplete()
         {
-            Debug.Log("CardGameManager: Свайп карточки завершен");
             EndRound();
             OnRoundComplete?.Invoke();
         }

@@ -113,7 +113,7 @@ namespace MathGame.Screens
                 // Обновляем текст вопроса после запуска игры
                 UpdateQuestionText();
             }
-            catch (System.Exception ex)
+            catch (Exception)
             {
             }
         }

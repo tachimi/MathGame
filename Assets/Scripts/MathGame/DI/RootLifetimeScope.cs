@@ -1,6 +1,6 @@
 using Bootstrap;
 using Bootstrap.Configs;
-using MathGame.Services;
+using MathGame.Tutorial;
 using SoundSystem.Core;
 using SoundSystem.Settings;
 using UI.ScrollRect;
@@ -32,6 +32,10 @@ namespace MathGame.DI
             builder.RegisterInstance(_volumeSettings);
 
             builder.Register<SessionScrollKeeper>(Lifetime.Singleton);
+
+            builder.Register<GameTutorial>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
 
             builder.RegisterEntryPoint<Bootstrapper>();
         }

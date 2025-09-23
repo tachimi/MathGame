@@ -43,7 +43,7 @@ namespace MathGame.UI.Cards
             }
         }
 
-        public override void OnDragFeedback(float dragDistance)
+        public void OnDragFeedback(float dragDistance)
         {
             // Применяем визуальную обратную связь только если карточка перевернута и есть текст ответа
             if (!_isFlipped || _answerText == null) return;

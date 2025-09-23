@@ -66,8 +66,6 @@ namespace MathGame.CardInteractions
         {
             if (_card == null) return;
             
-            Debug.Log($"FlashInteractionStrategy.OnPointerUp: _isDragging={_isDragging}, CanDrag={CanDrag}, IsFlipped={_card.IsFlipped}");
-            
             if (_isDragging && CanDrag)
             {
                 // Проверяем, достаточно ли далеко потянули для свайпа
@@ -120,30 +118,19 @@ namespace MathGame.CardInteractions
         
         public void OnCardClicked()
         {
-            Debug.Log($"FlashInteractionStrategy.OnCardClicked: _card={_card}, CanFlip={CanFlip}");
-            Debug.Log($"FlashInteractionStrategy: IsFlipping={_card?.IsFlipping}, IsPlayingSwipeAnimation={_card?.IsPlayingSwipeAnimation}, IsPlayingEntryAnimation={_card?.IsPlayingEntryAnimation}");
-            
             if (_card == null) return;
             
             // Переворачиваем карточку при клике
             if (CanFlip && !_card.IsFlipping && !_card.IsPlayingSwipeAnimation && !_card.IsPlayingEntryAnimation)
             {
-                Debug.Log("FlashInteractionStrategy: Calling FlipCard");
                 _card.FlipCard();
-            }
-            else
-            {
-                Debug.Log($"FlashInteractionStrategy: Cannot flip - conditions not met");
             }
         }
         
         public void OnSwipeUpDetected()
         {
-            Debug.Log($"FlashInteractionStrategy.OnSwipeUpDetected: _card={_card}, IsFlipped={_card?.IsFlipped}");
-            
             if (_card == null || !_card.IsFlipped)
             {
-                Debug.Log($"FlashInteractionStrategy: Skipping swipe up - card null or not flipped");
                 return;
             }
             
@@ -154,21 +141,18 @@ namespace MathGame.CardInteractions
             if (_flashCard != null)
             {
                 _flashCard.ShowRememberedFeedback();
-                Debug.Log("FlashInteractionStrategy: Feedback shown");
             }
             
             // Подписываемся на событие завершения анимации для выбора ответа
             // НЕ переопределяем OnSwipeUp, а добавляем к нему
             System.Action originalOnSwipeUp = _card.OnSwipeUp;
             _card.OnSwipeUp = () => {
-                Debug.Log("FlashInteractionStrategy: Animation completed, selecting answer");
                 _card.SelectAnswer(correctAnswer);
                 
                 // Вызываем оригинальные обработчики
                 originalOnSwipeUp?.Invoke();
             };
             
-            Debug.Log("FlashInteractionStrategy: Starting PlaySwipeUpAnimationAsync");
             // Запускаем анимацию исчезновения вверх
             _card.PlaySwipeUpAnimationAsync().Forget();
         }
@@ -187,7 +171,6 @@ namespace MathGame.CardInteractions
             // НЕ переопределяем OnSwipeDown, а добавляем к нему
             System.Action originalOnSwipeDown = _card.OnSwipeDown;
             _card.OnSwipeDown = () => {
-                Debug.Log("FlashInteractionStrategy: Swipe down animation completed, selecting answer");
                 _card.SelectAnswer(-1); // Неправильный ответ
                 
                 // Вызываем оригинальные обработчики
@@ -203,25 +186,19 @@ namespace MathGame.CardInteractions
             // Используем простое вычисление расстояния в screen space
             float swipeDistanceY = endPosition.y - _startTouchPosition.y;
             
-            Debug.Log($"FlashInteractionStrategy: Swipe distance Y: {swipeDistanceY}, threshold: {_swipeThreshold}");
-            Debug.Log($"FlashInteractionStrategy: Start pos: {_startTouchPosition.y}, End pos: {endPosition.y}");
-            
             if (Mathf.Abs(swipeDistanceY) >= _swipeThreshold)
             {
                 if (swipeDistanceY > 0)
                 {
-                    Debug.Log("FlashInteractionStrategy: Swipe UP detected");
                     OnSwipeUpDetected();
                 }
                 else
                 {
-                    Debug.Log("FlashInteractionStrategy: Swipe DOWN detected");
                     OnSwipeDownDetected();
                 }
             }
             else
             {
-                Debug.Log("FlashInteractionStrategy: Swipe threshold not reached, returning to position");
                 // Не достигли порога - возвращаем карточку на место
                 ReturnCardToOriginalPosition();
             }

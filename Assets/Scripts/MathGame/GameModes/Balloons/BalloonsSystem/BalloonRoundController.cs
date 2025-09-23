@@ -17,7 +17,6 @@ namespace MathGame.GameModes.Balloons.BalloonsSystem
         public event Action<int> OnCorrectAnswerSelected; // Правильный ответ выбран
         public event Action<int> OnWrongAnswerSelected; // Неправильный ответ выбран
         public event Action OnRoundLost; // Раунд проигран (правильный шар долетел)
-        public event Action OnRoundComplete;
 
         #endregion
 
