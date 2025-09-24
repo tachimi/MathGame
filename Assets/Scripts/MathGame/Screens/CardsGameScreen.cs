@@ -28,6 +28,7 @@ namespace MathGame.Screens
         private GameSettings _gameSettings;
         private CardGameManager _cardGameManager;
         private QuestionGenerator _questionGenerator;
+        private bool _isNewScreenRequested;
 
         public override void Initialize(GameSettings context)
         {
@@ -105,6 +106,9 @@ namespace MathGame.Screens
 
         private void OnSessionCompleted(GameSessionResult result, SessionEndReason reason)
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             switch (reason)
             {
                 case SessionEndReason.Completed:

@@ -43,6 +43,7 @@ namespace MathGame.Screens
         private BalloonGameManager _balloonGameManager;
         private IAsyncPublisher _publisher;
         private GameSettings _gameSettings;
+        private bool _isNewScreenRequested;
 
         [Inject]
         public void Construct(IAsyncPublisher publisher)
@@ -118,9 +119,11 @@ namespace MathGame.Screens
             }
         }
 
-
         private async void OnBalloonGameStateChanged(BalloonGameState state)
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             if (state == BalloonGameState.GameOver)
             {
                 // Добавляем задержку перед переходом на экран результатов
@@ -160,7 +163,6 @@ namespace MathGame.Screens
                 ScreensManager.OpenScreen<ResultScreen, GameSessionResult>(result);
                 CloseScreen();
             }
-
             if (state == BalloonGameState.Interrupted)
             {
                 ScreensManager.OpenScreen<MainMenuScreen>();

@@ -13,6 +13,8 @@ namespace MathGame.Screens
         [SerializeField] private AudioToggleButton _soundToggleButton;
         [SerializeField] private AudioToggleButton _musicToggleButton;
 
+        private bool _isNewScreenRequested;
+        
         protected void OnEnable()
         {
             SetupEventHandlers();
@@ -24,12 +26,13 @@ namespace MathGame.Screens
             {
                 _backButton.onClick.AddListener(OnBackClicked);
             }
-
-            // Аудио кнопки обрабатывают события сами через AudioToggleButton
         }
 
         private void OnBackClicked()
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             ScreensManager.OpenScreen<MainMenuScreen>();
             CloseScreen();
         }
@@ -44,8 +47,6 @@ namespace MathGame.Screens
         {
             if (_backButton != null)
                 _backButton.onClick.RemoveAllListeners();
-
-            // Аудио кнопки очищают события сами через AudioToggleButton
         }
     }
 }

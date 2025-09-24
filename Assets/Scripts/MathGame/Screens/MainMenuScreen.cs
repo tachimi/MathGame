@@ -16,6 +16,8 @@ namespace MathGame.Screens
         [SerializeField] private Button _settingsButton;
         [SerializeField] private Button _exitButton;
 
+        private bool _isNewScreenRequested;
+        
         protected override void Awake()
         {
             base.Awake();
@@ -50,6 +52,9 @@ namespace MathGame.Screens
 
         private void OnGameTypeSelected(GameType gameType)
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             // Создаем GameSettings с загруженными глобальными настройками и выбранными операциями
             var gameSettings = GameSettings.CreateWithGlobalSettings();
             gameSettings.GameType = gameType;
@@ -61,6 +66,9 @@ namespace MathGame.Screens
 
         private void OnSettingsClicked()
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             // Открываем экран настроек
             ScreensManager.OpenScreen<SettingsScreen>();
             CloseScreen();

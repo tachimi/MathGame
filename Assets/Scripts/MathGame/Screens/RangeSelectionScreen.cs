@@ -32,6 +32,7 @@ namespace MathGame.Screens
         private GameSettings _gameSettings;
         private NumberRangeConfig _rangeConfig;
         private List<NumberRangeButton> _rangeButtons = new();
+        private bool _isNewScreenRequested;
 
         [Inject]
         public void Construct(NumberRangeConfig rangeConfig)
@@ -196,6 +197,9 @@ namespace MathGame.Screens
         {
             if (_gameSettings.NumberRanges.Count > 0)
             {
+                if (_isNewScreenRequested) return;
+                _isNewScreenRequested = true;
+                
                 // Выбираем нужную сцену в зависимости от типа игры
                 switch (_gameSettings.GameType)
                 {
@@ -219,6 +223,9 @@ namespace MathGame.Screens
 
         private void OnBackClicked()
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             ScreensManager.OpenScreen<OperationSelectionScreen, GameSettings>(_gameSettings);
             CloseScreen();
         }

@@ -19,6 +19,7 @@ namespace MathGame.Screens
         [SerializeField] private Button _homeButton;
 
         private GameSessionResult _sessionResult;
+        private bool _isNewScreenRequested;
 
         public override void Initialize(GameSessionResult context)
         {
@@ -74,12 +75,15 @@ namespace MathGame.Screens
 
             if (_homeButton != null)
             {
-                _homeButton.onClick.AddListener(OnMenuClicked);
+                _homeButton.onClick.AddListener(OnHomeClicked);
             }
         }
 
         private void OnRestartClicked()
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             // Возвращаемся к игровому экрану с теми же настройками
             if (_sessionResult?.GameSettings.GameType == GameType.Balloons)
             {
@@ -93,8 +97,11 @@ namespace MathGame.Screens
             }
         }
 
-        private void OnMenuClicked()
+        private void OnHomeClicked()
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             ScreensManager.OpenScreen<MainMenuScreen>();
             CloseScreen();
         }

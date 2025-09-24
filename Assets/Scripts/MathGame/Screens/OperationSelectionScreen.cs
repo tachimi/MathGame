@@ -14,10 +14,10 @@ namespace MathGame.Screens
         [SerializeField] private OperationButton[] _operationButtons;
 
         [Header("Menu Buttons")]
-        [SerializeField] private Button _settingsButton;
         [SerializeField] private Button _homeButton;
         
         private GameSettings _context;
+        private bool _isNewScreenRequested;
 
         public override void Initialize(GameSettings context)
         {
@@ -35,15 +35,14 @@ namespace MathGame.Screens
             // Настройка кнопок операций
             SetupOperationButtons();
             
-            // Меню
-            if (_settingsButton != null)
-                _settingsButton.onClick.AddListener(OnSettingsClicked);
-
             if (_homeButton != null)
                 _homeButton.onClick.AddListener(OnHomeClicked);
         }
         private void OnOperationSelected(List<MathOperation> operations)
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+            
             _context.EnabledOperations = operations;
             
             // Переходим к экрану выбора диапазонов
@@ -63,16 +62,12 @@ namespace MathGame.Screens
                 }
             }
         }
-        
-        private void OnSettingsClicked()
-        {
-            // Открываем экран настроек
-            ScreensManager.OpenScreen<SettingsScreen>();
-            CloseScreen();
-        }
 
         private void OnHomeClicked()
         {
+            if (_isNewScreenRequested) return;
+            _isNewScreenRequested = true;
+
             ScreensManager.OpenScreen<MainMenuScreen>();
             CloseScreen();
         }
@@ -92,10 +87,6 @@ namespace MathGame.Screens
                     }
                 }
             }
-
-            // Меню
-            if (_settingsButton != null)
-                _settingsButton.onClick.RemoveAllListeners();
 
             if (_homeButton != null)
                 _homeButton.onClick.RemoveAllListeners();
