@@ -17,6 +17,7 @@ namespace MathGame.CardInteractions
         public bool CanFlip => !IsFlipBlocked;
         public bool CanDrag => false; // Drag события отключены
         public bool IsFlipBlocked { get; set; } = false;
+        public bool IsSwipeBlocked { get; set; } = false;
 
         private BaseMathCard _card;
         private Vector2 _startTouchPosition;
@@ -78,7 +79,7 @@ namespace MathGame.CardInteractions
         
         public void OnSwipeUpDetected()
         {
-            if (_card == null || !_card.IsFlipped) return;
+            if (_card == null || !_card.IsFlipped || IsSwipeBlocked) return;
 
             // MultipleChoice: свайп вверх работает только на обратной стороне
             var multipleChoiceCard = _card as MultipleChoiceCard;

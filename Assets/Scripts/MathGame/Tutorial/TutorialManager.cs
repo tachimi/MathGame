@@ -144,14 +144,10 @@ namespace MathGame.Tutorial
         private void ApplyStepActions(TutorialStep step)
         {
             // Блокировка переворота карточки
-            if (step.blockCardFlip)
-            {
-                BlockCardFlip(true);
-            }
-            else
-            {
-                BlockCardFlip(false);
-            }
+            BlockCardFlip(step.blockCardFlip);
+
+            // Блокировка свайпов
+            BlockSwipe(step.blockSwipe);
 
             // Блокировка кнопок ответов (пока не реализована)
             // TODO: Добавить блокировку кнопок ответов если понадобится
@@ -520,69 +516,8 @@ namespace MathGame.Tutorial
         private TutorialGameConfig FindTutorialConfig(GameType gameType)
         {
             var config = _tutorialConfigs.FirstOrDefault(c => c.gameType == gameType);
-
-            // Если конфигурация не найдена, создаем базовую для Multiple Choice
-            if (config == null && gameType == GameType.AnswerMathCards)
-            {
-                config = CreateDefaultMultipleChoiceConfig();
-                _tutorialConfigs.Add(config);
-            }
-
             return config;
         }
-
-        /// <summary>
-        /// Создать конфигурацию по умолчанию для Multiple Choice
-        /// </summary>
-        private TutorialGameConfig CreateDefaultMultipleChoiceConfig()
-        {
-            var config = new TutorialGameConfig
-            {
-                gameType = GameType.AnswerMathCards,
-            };
-
-            // Шаг 1: Тап по карточке - ждем анимацию появления карточки
-            config.steps.Add(new TutorialStep
-            {
-                stepName = "Tap Card",
-                target = TutorialTarget.Card,
-                positionOffset = Vector2.zero,
-                delayBeforeStep = 1.0f, // Ждем анимацию появления карточки
-                animation = TutorialAnimation.Tap,
-                animationSpeed = 1f,
-                blockCardFlip = false,
-                waitFor = TutorialTrigger.CardFlipped
-            });
-
-            // Шаг 2: Выбор ответа
-            config.steps.Add(new TutorialStep
-            {
-                stepName = "Select Answer",
-                target = TutorialTarget.FirstAnswerButton,
-                positionOffset = Vector2.zero,
-                delayBeforeStep = 0.5f,
-                animation = TutorialAnimation.Tap,
-                animationSpeed = 1f,
-                blockCardFlip = true,
-                waitFor = TutorialTrigger.AnswerSelected
-            });
-
-            // Шаг 3: Плавный свайп вверх
-            config.steps.Add(new TutorialStep
-            {
-                stepName = "Smooth Swipe Up",
-                target = TutorialTarget.Card,
-                positionOffset = Vector2.zero,
-                delayBeforeStep = 0.5f,
-                animation = TutorialAnimation.SwipeUpSmooth,
-                animationSpeed = 1f,
-                blockCardFlip = true,
-                waitFor = TutorialTrigger.SwipeUp
-            });
-
-            return config;
-        }
-
 
         /// <summary>
         /// Получить первую кнопку ответа
@@ -606,11 +541,18 @@ namespace MathGame.Tutorial
         {
             if (_currentCard?.InteractionStrategy != null)
             {
-                var strategy = _currentCard.InteractionStrategy;
-                if (strategy is CardInteractions.MultipleChoiceInteractionStrategy mcStrategy)
-                {
-                    mcStrategy.IsFlipBlocked = blocked;
-                }
+                _currentCard.InteractionStrategy.IsFlipBlocked = blocked;
+            }
+        }
+
+        /// <summary>
+        /// Заблокировать/разблокировать свайпы
+        /// </summary>
+        private void BlockSwipe(bool blocked)
+        {
+            if (_currentCard?.InteractionStrategy != null)
+            {
+                _currentCard.InteractionStrategy.IsSwipeBlocked = blocked;
             }
         }
 
@@ -623,15 +565,12 @@ namespace MathGame.Tutorial
         /// </summary>
         private void CompleteTutorial()
         {
-            Debug.Log("TutorialManager: Туториал успешно завершен");
-
             // Сохраняем что туториал завершен ПЕРЕД очисткой ресурсов
             if (_currentConfig != null)
             {
                 string saveKey = $"Tutorial_{_currentConfig.gameType}_Completed";
                 PlayerPrefs.SetInt(saveKey, 1);
                 PlayerPrefs.Save();
-                Debug.Log($"TutorialManager: Прогресс туториала для {_currentConfig.gameType} сохранен");
             }
 
             CleanupTutorial();
@@ -657,6 +596,7 @@ namespace MathGame.Tutorial
         {
             HideTooltip();
             BlockCardFlip(false);
+            BlockSwipe(false);
             UnsubscribeFromCardEvents();
 
             _isTutorialActive = false;
@@ -687,17 +627,6 @@ namespace MathGame.Tutorial
 
             PlayerPrefs.Save();
             Debug.Log("TutorialManager: Все туториалы сброшены");
-        }
-
-        /// <summary>
-        /// Сбросить туториал для конкретного типа игры
-        /// </summary>
-        public void ResetTutorial(GameType gameType)
-        {
-            string saveKey = $"Tutorial_{gameType}_Completed";
-            PlayerPrefs.DeleteKey(saveKey);
-            PlayerPrefs.Save();
-            Debug.Log($"TutorialManager: Туториал для {gameType} сброшен");
         }
 
         #endregion

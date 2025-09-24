@@ -44,6 +44,17 @@ namespace MathGame.Questions
             InitializeCounters();
         }
 
+        /// <summary>
+        /// Получить статистику генерации вопросов
+        /// </summary>
+        public (int generated, int estimatedMax, float percentage) GetGenerationStatistics()
+        {
+            int generated = _generatedQuestions.Count;
+            int estimatedMax = EstimateMaxPossibleCombinations();
+            float percentage = estimatedMax > 0 ? (float)generated / estimatedMax * 100 : 0;
+            return (generated, estimatedMax, percentage);
+        }
+
         private void InitializeCounters()
         {
             _zeroOperandCount.Clear();
@@ -60,34 +71,58 @@ namespace MathGame.Questions
 
         public Question GenerateQuestion()
         {
-            const int maxAttempts = 1000; // Защита от бесконечного цикла
-            var attempts = 0;
+            const int maxAttempts = 100; // Уменьшаем количество попыток перед сбросом
+            const int maxResetCycles = 3; // Максимум циклов сброса
+            var resetCycle = 0;
 
-            while (attempts < maxAttempts)
+            while (resetCycle < maxResetCycles)
             {
-                attempts++;
+                var attempts = 0;
 
-                var operation = GetRandomOperation();
-                var numberRange = GetRandomNumberRange();
-
-                var question = operation switch
+                while (attempts < maxAttempts)
                 {
-                    MathOperation.Addition => GenerateAddition(numberRange),
-                    MathOperation.Subtraction => GenerateSubtraction(numberRange),
-                    MathOperation.Multiplication => GenerateMultiplication(numberRange),
-                    MathOperation.Division => GenerateDivision(numberRange),
-                    _ => null
-                };
+                    attempts++;
 
-                if (question != null && IsQuestionValid(question))
+                    var operation = GetRandomOperation();
+                    var numberRange = GetRandomNumberRange();
+
+                    var question = operation switch
+                    {
+                        MathOperation.Addition => GenerateAddition(numberRange),
+                        MathOperation.Subtraction => GenerateSubtraction(numberRange),
+                        MathOperation.Multiplication => GenerateMultiplication(numberRange),
+                        MathOperation.Division => GenerateDivision(numberRange),
+                        _ => null
+                    };
+
+                    if (question != null && IsQuestionValid(question))
+                    {
+                        RegisterQuestion(question);
+                        question.QuestionText = question.GetQuestionDisplay();
+                        return question;
+                    }
+                }
+
+                // Если достигли лимита попыток, проверяем нужен ли сброс
+                if (ShouldResetDueToCombinationsExhausted())
                 {
-                    RegisterQuestion(question);
-                    question.QuestionText = question.GetQuestionDisplay();
-                    return question;
+                    int estimatedMax = EstimateMaxPossibleCombinations();
+                    Debug.Log($"QuestionGenerator: Исчерпаны комбинации ({_generatedQuestions.Count}/{estimatedMax}). " +
+                             $"Сброс (цикл {resetCycle + 1}/{maxResetCycles})");
+                    ResetGeneratedQuestions();
+                    resetCycle++;
+                }
+                else
+                {
+                    // Если комбинации еще есть, но генерация не удается - выходим
+                    Debug.LogWarning($"QuestionGenerator: Не удалось сгенерировать вопрос за {maxAttempts} попыток. " +
+                                   $"Сгенерировано {_generatedQuestions.Count} вопросов.");
+                    break;
                 }
             }
 
-            // Если не смогли сгенерировать валидный вопрос, возвращаем простой пример
+            // Если не смогли сгенерировать даже после сбросов, возвращаем простой пример
+            Debug.LogWarning("QuestionGenerator: Невозможно сгенерировать вопрос даже после сброса. Используется fallback.");
             return CreateFallbackQuestion();
         }
 
@@ -138,16 +173,16 @@ namespace MathGame.Questions
         /// </summary>
         private Question GenerateAddition(NumberRange userRange)
         {
-            // Получаем полный диапазон сложности для второго числа
-            var fullRange = GetDefaultRange();
+            // Получаем диапазон сложности для второго числа
+            var difficultyRange = GetDefaultRange();
 
             // Первое число - из выбранного пользователем диапазона
             int first = Random.Range(userRange.Min, userRange.Max + 1);
-            // Второе число - из полного диапазона сложности
-            int second = Random.Range(fullRange.Min, fullRange.Max + 1);
+            // Второе число - из диапазона сложности
+            int second = Random.Range(difficultyRange.Min, difficultyRange.Max + 1);
 
             Debug.Log(
-                $"GenerateAddition: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
+                $"GenerateAddition: userRange=({userRange.Min}-{userRange.Max}), difficultyRange=({difficultyRange.Min}-{difficultyRange.Max}), first={first}, second={second}");
 
             return new Question
             {
@@ -163,16 +198,16 @@ namespace MathGame.Questions
         /// </summary>
         private Question GenerateSubtraction(NumberRange userRange)
         {
-            // Получаем полный диапазон сложности для второго числа
-            var fullRange = GetDefaultRange();
+            // Получаем диапазон сложности для первого числа
+            var difficultyRange = GetDefaultRange();
 
-            // Первое число - из пользовательского диапазона
-            int first = Random.Range(userRange.Min, userRange.Max + 1);
-            // Второе число - из полного диапазона сложности, но не больше первого
-            int second = Random.Range(fullRange.Min, Math.Min(fullRange.Max, first) + 1);
+            // Первое число - из диапазона сложности
+            int first = Random.Range(difficultyRange.Min, difficultyRange.Max + 1);
+            // Второе число - из пользовательского диапазона, но не больше первого
+            int second = Random.Range(userRange.Min, Math.Min(userRange.Max, first) + 1);
 
             Debug.Log(
-                $"GenerateSubtraction: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
+                $"GenerateSubtraction: userRange=({userRange.Min}-{userRange.Max}), difficultyRange=({difficultyRange.Min}-{difficultyRange.Max}), first={first}, second={second}");
 
             return new Question
             {
@@ -188,16 +223,16 @@ namespace MathGame.Questions
         /// </summary>
         private Question GenerateMultiplication(NumberRange userRange)
         {
-            // Получаем полный диапазон сложности для второго числа
-            var fullRange = GetDefaultRange();
+            // Получаем диапазон сложности для второго числа
+            var difficultyRange = GetDefaultRange();
 
             // Первое число - из выбранного пользователем диапазона
             int first = Random.Range(userRange.Min, userRange.Max + 1);
-            // Второе число - из полного диапазона сложности
-            int second = Random.Range(fullRange.Min, fullRange.Max + 1);
+            // Второе число - из диапазона сложности
+            int second = Random.Range(difficultyRange.Min, difficultyRange.Max + 1);
 
             Debug.Log(
-                $"GenerateMultiplication: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), first={first}, second={second}");
+                $"GenerateMultiplication: userRange=({userRange.Min}-{userRange.Max}), difficultyRange=({difficultyRange.Min}-{difficultyRange.Max}), first={first}, second={second}");
 
             return new Question
             {
@@ -213,16 +248,16 @@ namespace MathGame.Questions
         /// </summary>
         private Question GenerateDivision(NumberRange userRange)
         {
-            // Получаем полный диапазон сложности для второго числа (делителя)
-            var fullRange = GetDefaultRange();
+            // Получаем диапазон сложности для первого числа (делимого)
+            var difficultyRange = GetDefaultRange();
 
-            // Делимое - из пользовательского диапазона
-            int dividend = Random.Range(userRange.Min, userRange.Max + 1);
+            // Делимое - из диапазона сложности
+            int dividend = Random.Range(difficultyRange.Min, difficultyRange.Max + 1);
 
-            // Делитель - из полного диапазона сложности (не ноль), но должен быть делителем dividend
+            // Делитель - из пользовательского диапазона (не ноль), но должен быть делителем dividend
             var possibleDivisors = new List<int>();
 
-            for (int i = Math.Max(1, fullRange.Min); i <= Math.Min(fullRange.Max, dividend); i++)
+            for (int i = Math.Max(1, userRange.Min); i <= Math.Min(userRange.Max, dividend); i++)
             {
                 if (dividend % i == 0) // i является делителем dividend
                 {
@@ -232,15 +267,23 @@ namespace MathGame.Questions
 
             if (possibleDivisors.Count == 0)
             {
-                // Если нет подходящих делителей, используем 1
-                possibleDivisors.Add(1);
+                // Если нет подходящих делителей, используем 1 (если он в диапазоне)
+                if (userRange.Min <= 1 && userRange.Max >= 1)
+                {
+                    possibleDivisors.Add(1);
+                }
+                else
+                {
+                    // Если 1 не в диапазоне, возвращаем null - пример не может быть создан
+                    return null;
+                }
             }
 
             int divisor = possibleDivisors[Random.Range(0, possibleDivisors.Count)];
             int result = dividend / divisor;
 
             Debug.Log(
-                $"GenerateDivision: userRange=({userRange.Min}-{userRange.Max}), fullRange=({fullRange.Min}-{fullRange.Max}), dividend={dividend}, divisor={divisor}, result={result}");
+                $"GenerateDivision: userRange=({userRange.Min}-{userRange.Max}), difficultyRange=({difficultyRange.Min}-{difficultyRange.Max}), dividend={dividend}, divisor={divisor}, result={result}");
 
             return new Question
             {
@@ -345,6 +388,81 @@ namespace MathGame.Questions
         private string GetQuestionKey(Question question)
         {
             return $"{question.FirstNumber}{GetOperationSymbol(question.Operation)}{question.SecondNumber}";
+        }
+
+        /// <summary>
+        /// Проверяет, исчерпаны ли возможные комбинации
+        /// </summary>
+        private bool ShouldResetDueToCombinationsExhausted()
+        {
+            // Проверяем количество уже сгенерированных вопросов
+            int generatedCount = _generatedQuestions.Count;
+
+            // Оцениваем максимально возможное количество комбинаций
+            int estimatedMaxCombinations = EstimateMaxPossibleCombinations();
+
+            // Если сгенерировано больше 80% возможных комбинаций, считаем что пора сбросить
+            // Используем 80% чтобы не тратить время на поиск последних редких комбинаций
+            return generatedCount >= estimatedMaxCombinations * 0.8f;
+        }
+
+        /// <summary>
+        /// Оценивает максимальное количество возможных комбинаций
+        /// </summary>
+        private int EstimateMaxPossibleCombinations()
+        {
+            if (_settings == null || _settings.NumberRanges == null || _settings.NumberRanges.Count == 0)
+                return 100; // Значение по умолчанию
+
+            int totalCombinations = 0;
+
+            // Получаем размер диапазона сложности для второго операнда в + и ×
+            var difficultyRange = GetDefaultRange();
+            int difficultyRangeSize = difficultyRange.Max - difficultyRange.Min + 1;
+
+            foreach (var range in _settings.NumberRanges)
+            {
+                int rangeSize = range.Max - range.Min + 1;
+
+                foreach (var operation in _settings.EnabledOperations)
+                {
+                    switch (operation)
+                    {
+                        case MathOperation.Addition:
+                        case MathOperation.Multiplication:
+                            // Для + и × первое число из userRange, второе из difficultyRange
+                            // минус ограничения на 0 и 1
+                            totalCombinations += rangeSize * difficultyRangeSize;
+                            break;
+
+                        case MathOperation.Subtraction:
+                            // Для вычитания первое из difficultyRange, второе из userRange
+                            // Учитываем что second <= first
+                            totalCombinations += difficultyRangeSize * rangeSize / 2;
+                            break;
+
+                        case MathOperation.Division:
+                            // Для деления первое из difficultyRange, второе из userRange (должен быть делителем)
+                            // Грубая оценка - примерно difficultyRangeSize * log(rangeSize)
+                            totalCombinations += difficultyRangeSize * Math.Max(1, (int)Math.Log(rangeSize, 2));
+                            break;
+                    }
+                }
+            }
+
+            // Возвращаем оценку с небольшим запасом
+            return Math.Max(10, totalCombinations);
+        }
+
+        /// <summary>
+        /// Сброс списка сгенерированных вопросов для повторного использования комбинаций
+        /// </summary>
+        private void ResetGeneratedQuestions()
+        {
+            _generatedQuestions.Clear();
+            // Сбрасываем счетчики специальных случаев
+            InitializeCounters();
+            Debug.Log("QuestionGenerator: Список сгенерированных вопросов сброшен. Комбинации доступны заново.");
         }
 
         /// <summary>

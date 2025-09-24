@@ -62,6 +62,7 @@ namespace MathGame.Tutorial
         [Header("Actions")]
         public bool blockCardFlip = false;
         public bool blockAnswerButtons = false;
+        public bool blockSwipe = false;
 
         [Header("Trigger")]
         public TutorialTrigger waitFor = TutorialTrigger.CardFlipped;

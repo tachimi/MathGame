@@ -64,5 +64,10 @@ namespace MathGame.Interfaces
         /// Заблокирован ли переворот карточки
         /// </summary>
         bool IsFlipBlocked { get; set; }
+
+        /// <summary>
+        /// Заблокированы ли свайпы
+        /// </summary>
+        bool IsSwipeBlocked { get; set; }
     }
 }

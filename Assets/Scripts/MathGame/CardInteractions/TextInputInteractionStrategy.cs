@@ -16,6 +16,7 @@ namespace MathGame.CardInteractions
         public bool CanFlip => false; // TextInput карточки не переворачиваются
         public bool CanDrag => false;
         public bool IsFlipBlocked { get; set; } = false;
+        public bool IsSwipeBlocked { get; set; } = false;
         
         public void Initialize(MonoBehaviour cardComponent)
         {

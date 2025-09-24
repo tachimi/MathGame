@@ -26,8 +26,9 @@ namespace MathGame.CardInteractions
         private float _swipeThreshold = 120f;
 
         public bool CanFlip => !IsFlipBlocked;
-        public bool CanDrag => _card != null && _card.IsFlipped;
+        public bool CanDrag => _card != null && _card.IsFlipped && !IsSwipeBlocked;
         public bool IsFlipBlocked { get; set; } = false;
+        public bool IsSwipeBlocked { get; set; } = false;
         
         public void Initialize(MonoBehaviour cardComponent)
         {
@@ -130,7 +131,7 @@ namespace MathGame.CardInteractions
         
         public void OnSwipeUpDetected()
         {
-            if (_card == null || !_card.IsFlipped)
+            if (_card == null || !_card.IsFlipped || IsSwipeBlocked)
             {
                 return;
             }
@@ -160,7 +161,7 @@ namespace MathGame.CardInteractions
         
         public void OnSwipeDownDetected()
         {
-            if (_card == null || !_card.IsFlipped) return;
+            if (_card == null || !_card.IsFlipped || IsSwipeBlocked) return;
             
             // Показываем визуальную обратную связь
             if (_flashCard != null)
