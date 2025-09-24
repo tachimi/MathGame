@@ -44,18 +44,11 @@ namespace MathGame.Screens
 
         private void SetupGameSession()
         {
-            if (_sessionController == null)
-            {
-                Debug.LogError("GameSessionController is null!");
-                return;
-            }
-
             // Инициализируем контроллер сессии
             _sessionController.Initialize(_gameSettings);
 
             // Подписываемся на события
             _sessionController.OnQuestionGenerated += OnQuestionGenerated;
-            _sessionController.OnQuestionAnswered += OnQuestionAnswered;
             _sessionController.OnSessionCompleted += OnSessionCompleted;
 
             // Запускаем сессию
@@ -74,19 +67,12 @@ namespace MathGame.Screens
         {
             try
             {
-                // Проверяем что фабрика назначена
-                if (_cardFactory == null)
-                {
-                    Debug.LogError("CardsGameScreen: MathCardFactory не назначена в инспекторе!");
-                    return;
-                }
-
                 // Создаем менеджер карточной игры
                 _cardGameManager = new CardGameManager();
-                
+
                 // Инициализируем его с фабрикой со сцены
                 _cardGameManager.Initialize(_gameSettings, _cardFactory);
-                
+
                 // Подписываемся на события
                 _cardGameManager.OnAnswerSelected += OnCardAnswerSelected;
                 _cardGameManager.OnRoundComplete += OnCardRoundComplete;
@@ -99,34 +85,22 @@ namespace MathGame.Screens
 
         private void OnQuestionGenerated(Question question)
         {
-            if (_cardGameManager != null)
-            {
-                _cardGameManager.StartRound(question);
+            _cardGameManager.StartRound(question, !_tutorialManager.IsTutorialPassed(_gameSettings.GameType));
 
-                // Запускаем туториал для первого вопроса (если не пройден)
-                if (_sessionController.CurrentQuestionIndex == 0 && _tutorialManager != null)
-                {
-                    StartTutorialAsync();
-                }
-            }
-            else
+            // Запускаем туториал только для первого вопроса (индекс 0)
+            if (!_tutorialManager.IsTutorialPassed(_gameSettings.GameType) && _sessionController.CurrentQuestionIndex == 0)
             {
-                Debug.LogError("CardsGameScreen: _cardGameManager is null!");
+                Debug.Log("Starting Tutorial for first question");
+                var currentCard = _cardGameManager.CurrentCard;
+                StartTutorial(currentCard);
             }
 
             UpdateProgressText();
         }
 
-        private void StartTutorialAsync()
+        private void StartTutorial(BaseMathCard card)
         {
-            if (_tutorialManager != null && _cardFactory != null)
-            {
-            }
-        }
-
-        private void OnQuestionAnswered(QuestionResult result)
-        {
-            // Не обновляем прогресс здесь - только после свайпа
+            _tutorialManager.StartTutorial(card, _gameSettings.GameType);
         }
 
         private void OnSessionCompleted(GameSessionResult result, SessionEndReason reason)
@@ -170,8 +144,6 @@ namespace MathGame.Screens
 
         private void OnCardRoundComplete()
         {
-            // Событие вызывается ПОСЛЕ завершения раунда (анимации свайпа)
-            
             // Проверяем, не последний ли это вопрос
             if (_sessionController.CurrentQuestionIndex >= _gameSettings.QuestionsCount)
             {
@@ -202,7 +174,6 @@ namespace MathGame.Screens
             if (_sessionController != null)
             {
                 _sessionController.OnQuestionGenerated -= OnQuestionGenerated;
-                _sessionController.OnQuestionAnswered -= OnQuestionAnswered;
                 _sessionController.OnSessionCompleted -= OnSessionCompleted;
                 _sessionController = null;
             }
@@ -213,6 +184,12 @@ namespace MathGame.Screens
             // Отписываемся от менеджера карточек и очищаем ресурсы
             UnsubscribeFromCardGameManager();
             _cardGameManager?.Cleanup();
+
+            // Останавливаем туториал если активен
+            if (_tutorialManager != null)
+            {
+                _tutorialManager.StopTutorial();
+            }
 
             _questionGenerator = null;
         }

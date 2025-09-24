@@ -1,5 +1,6 @@
 using System;
 using MathGame.CardInteractions;
+using MathGame.Tutorial;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,15 +13,15 @@ namespace MathGame.UI.Cards
     /// </summary>
     public class MultipleChoiceCard : BaseMathCard
     {
-        [Header("Multiple Choice Components")] [SerializeField]
-        private Transform _answersContainer;
-
+        public Button[] AnswerButtons => _answerButtons;
+        
+        [Header("Multiple Choice Components")]
+        [SerializeField] private Transform _answersContainer;
         [SerializeField] private Button _answerButtonPrefab;
         [SerializeField] private int _answersAmount = 6;
 
-        [Header("Visual Feedback")] [SerializeField]
-        private Color _correctAnswerColor = Color.green;
-
+        [Header("Visual Feedback")]
+        [SerializeField] private Color _correctAnswerColor = Color.green;
         [SerializeField] private Color _wrongAnswerColor = Color.red;
         [SerializeField] private Color _disabledColor = Color.gray;
 
@@ -93,13 +94,16 @@ namespace MathGame.UI.Cards
                 options[i] = wrongAnswer;
             }
 
-            // Перемешиваем варианты
-            for (int i = 0; i < options.Length; i++)
+            // Перемешиваем варианты только если туториал НЕ активен
+            if (!_isTutorial)
             {
-                int temp = options[i];
-                int randomIndex = UnityEngine.Random.Range(i, options.Length);
-                options[i] = options[randomIndex];
-                options[randomIndex] = temp;
+                for (int i = 0; i < options.Length; i++)
+                {
+                    int temp = options[i];
+                    int randomIndex = UnityEngine.Random.Range(i, options.Length);
+                    options[i] = options[randomIndex];
+                    options[randomIndex] = temp;
+                }
             }
 
             return options;
@@ -235,6 +239,15 @@ namespace MathGame.UI.Cards
             }
 
             _answerButtons = null;
+        }
+
+        protected override Vector2 GetFirstAnswerButtonPosition()
+        {
+            if (_answerButtons != null && _answerButtons.Length > 0 && _answerButtons[0] != null)
+            {
+                return _answerButtons[0].transform.position;
+            }
+            return base.GetFirstAnswerButtonPosition();
         }
 
         protected override void OnDestroy()

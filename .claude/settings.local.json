@@ -27,7 +27,9 @@
       "Read(/D:\\Work\\UnityProjects\\MathGame\\Assets\\Scripts\\MathGame\\Screens/**)",
       "Bash(find:*)",
       "Bash(dir:*)",
-      "Bash(ren:*)"
+      "Bash(ren:*)",
+      "Read(//d/Work/UnityProjects/MathGame/Assets/Scripts/MathGame/Screens/**)",
+      "Read(//d/Work/UnityProjects/MathGame/**)"
     ],
     "defaultMode": "acceptEdits"
   }

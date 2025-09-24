@@ -237,9 +237,9 @@ namespace MathGame.UI.Cards
         }
 
 
-        public override void SetQuestion(Question question)
+        public override void SetQuestion(Question question, bool isTutorial)
         {
-            base.SetQuestion(question);
+            base.SetQuestion(question, isTutorial);
             
             // Сбрасываем ввод для нового вопроса
             _currentInput = "";

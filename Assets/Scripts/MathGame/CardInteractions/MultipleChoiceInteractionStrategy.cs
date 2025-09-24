@@ -14,16 +14,15 @@ namespace MathGame.CardInteractions
     /// </summary>
     public class MultipleChoiceInteractionStrategy : ICardInteractionStrategy
     {
+        public bool CanFlip => !IsFlipBlocked;
+        public bool CanDrag => false; // Drag события отключены
+        public bool IsFlipBlocked { get; set; } = false;
+
         private BaseMathCard _card;
-        
-        // Состояние касания для детекции свайпа
         private Vector2 _startTouchPosition;
         private float _touchStartTime;
         private float _swipeThreshold = 50f;
         private float _swipeTimeThreshold = 0.5f;
-        
-        public bool CanFlip => true;
-        public bool CanDrag => false; // Drag события отключены
         
         public void Initialize(MonoBehaviour cardComponent)
         {
@@ -68,18 +67,19 @@ namespace MathGame.CardInteractions
         public void OnCardClicked()
         {
             if (_card == null) return;
-            
+
             // Переворачиваем карточку при клике
             if (CanFlip && !_card.IsFlipping && !_card.IsPlayingSwipeAnimation && !_card.IsPlayingEntryAnimation)
             {
                 _card.FlipCard();
+
             }
         }
         
         public void OnSwipeUpDetected()
         {
             if (_card == null || !_card.IsFlipped) return;
-            
+
             // MultipleChoice: свайп вверх работает только на обратной стороне
             var multipleChoiceCard = _card as MultipleChoiceCard;
             if (multipleChoiceCard != null)
@@ -90,7 +90,8 @@ namespace MathGame.CardInteractions
                     _card.SelectAnswer(-1);
                 }
             }
-            
+
+
             // Запускаем анимацию исчезновения вверх
             _card.PlaySwipeUpAnimationAsync().Forget();
         }
@@ -114,6 +115,7 @@ namespace MathGame.CardInteractions
             return isLongEnough && isFastEnough && isUpward;
         }
         
+
         public void Cleanup()
         {
             _card = null;

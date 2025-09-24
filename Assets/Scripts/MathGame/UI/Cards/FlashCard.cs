@@ -90,9 +90,9 @@ namespace MathGame.UI.Cards
             }
         }
 
-        public override void SetQuestion(Question question)
+        public override void SetQuestion(Question question, bool isTutorial)
         {
-            base.SetQuestion(question);
+            base.SetQuestion(question, isTutorial);
 
             // Сбрасываем цвета для нового вопроса
             if (_answerText != null)

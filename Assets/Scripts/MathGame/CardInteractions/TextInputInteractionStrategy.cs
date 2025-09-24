@@ -12,9 +12,10 @@ namespace MathGame.CardInteractions
     public class TextInputInteractionStrategy : ICardInteractionStrategy
     {
         private MonoBehaviour _cardComponent;
-        
-        public bool CanFlip => false;
+
+        public bool CanFlip => false; // TextInput карточки не переворачиваются
         public bool CanDrag => false;
+        public bool IsFlipBlocked { get; set; } = false;
         
         public void Initialize(MonoBehaviour cardComponent)
         {
@@ -51,6 +52,7 @@ namespace MathGame.CardInteractions
             // Свайп вниз не поддерживается
         }
         
+
         public void Cleanup()
         {
             _cardComponent = null;

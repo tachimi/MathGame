@@ -58,5 +58,11 @@ namespace MathGame.Interfaces
         /// Очистка ресурсов
         /// </summary>
         void Cleanup();
+
+
+        /// <summary>
+        /// Заблокирован ли переворот карточки
+        /// </summary>
+        bool IsFlipBlocked { get; set; }
     }
 }

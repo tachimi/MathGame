@@ -9,7 +9,6 @@ namespace MathGame.Core
     public class GameSessionController
     {
         public event Action<Question> OnQuestionGenerated;
-        public event Action<QuestionResult> OnQuestionAnswered;
         public event Action<GameSessionResult, SessionEndReason> OnSessionCompleted;
 
         public int CurrentQuestionIndex { get; private set; }
@@ -72,7 +71,6 @@ namespace MathGame.Core
             };
             
             _sessionResult.Results.Add(result);
-            OnQuestionAnswered?.Invoke(result);
         }
         
         public void NextQuestion()

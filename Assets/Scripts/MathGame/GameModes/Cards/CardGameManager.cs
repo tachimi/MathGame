@@ -39,11 +39,16 @@ namespace MathGame.GameModes.Cards
         /// Завершен ли текущий раунд
         /// </summary>
         public bool IsRoundComplete { get; private set; }
-        
+
+        /// <summary>
+        /// Текущая карточка (для доступа из экрана)
+        /// </summary>
+        public BaseMathCard CurrentCard => _currentCard;
+
         #endregion
-        
+
         #region Private Fields
-        
+
         private GameSettings _gameSettings;
         private MathCardFactory _cardFactory;
         private BaseMathCard _currentCard;
@@ -62,16 +67,17 @@ namespace MathGame.GameModes.Cards
             _gameSettings = settings ?? throw new ArgumentNullException(nameof(settings));
             _cardFactory = cardFactory ?? throw new ArgumentNullException(nameof(cardFactory));
         }
-        
+
         /// <summary>
         /// Установить новый вопрос и создать карточку
         /// </summary>
         /// <param name="question">Вопрос для отображения</param>
-        public void StartRound(Question question)
+        /// <param name="isTutorial"></param>
+        public void StartRound(Question question, bool isTutorial)
         {
             CurrentQuestion = question ?? throw new ArgumentNullException(nameof(question));
-            CreateCardForQuestion();
             IsRoundComplete = false;
+            CreateCardForQuestion(isTutorial);
         }
         
         /// <summary>
@@ -82,6 +88,7 @@ namespace MathGame.GameModes.Cards
             IsRoundComplete = true;
         }
         
+
         /// <summary>
         /// Очистка ресурсов
         /// </summary>
@@ -98,7 +105,7 @@ namespace MathGame.GameModes.Cards
         /// <summary>
         /// Создание карточки для текущего вопроса
         /// </summary>
-        private void CreateCardForQuestion()
+        private void CreateCardForQuestion(bool isTutorial)
         {
             if (_cardFactory == null || CurrentQuestion == null)
             {
@@ -113,8 +120,9 @@ namespace MathGame.GameModes.Cards
             _currentCard = _cardFactory.CreateCard(_gameSettings.GameType);
             if (_currentCard != null)
             {
+
                 SubscribeToCardEvents();
-                _currentCard.SetQuestion(CurrentQuestion);
+                _currentCard.SetQuestion(CurrentQuestion, isTutorial);
             }
             else
             {

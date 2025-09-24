@@ -122,141 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &18837195
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 18837197}
-  - component: {fileID: 18837198}
-  m_Layer: 0
-  m_Name: Tutorial
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &18837197
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 18837195}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &18837198
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 18837195}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 06201dd608c87d14f9500c1e8f4889c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _handPrefab: {fileID: 3707979005429422444, guid: af079e7c7667ae54ea5d882382547575, type: 3}
-  _handOffset: {x: 0, y: 50}
-  _tapCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  _swipeCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  _tapAnimationDuration: 0.8
-  _swipeAnimationDuration: 1.2
-  _swipeDistance: 200
-  _loopDelay: 0.3
-  _tapScaleMultiplier: 1.3
-  _tutorialConfigs:
-  - _gameType: 0
-    _enabled: 1
-    _steps:
-    - _actionType: 0
-      _stepName: tap_on_card
-      _enabled: 1
-      _target: 4
-      _positionOffset: {x: 100, y: 100}
-      _animationDuration: -1
-      _loopDelay: 0.5
-      _waitForUserAction: 1
-      _scaleMultiplier: 1.25
-      _swipeDistance: 0
-    - _actionType: 0
-      _stepName: tap_on_right_answer
-      _enabled: 1
-      _target: 4
-      _positionOffset: {x: 100, y: 100}
-      _animationDuration: -1
-      _loopDelay: 0.5
-      _waitForUserAction: 1
-      _scaleMultiplier: 1.25
-      _swipeDistance: 0
-    - _actionType: 1
-      _stepName: swipe_up
-      _enabled: 1
-      _target: 4
-      _positionOffset: {x: 0, y: 0}
-      _animationDuration: -1
-      _loopDelay: 0.5
-      _waitForUserAction: 1
-      _scaleMultiplier: 1.25
-      _swipeDistance: 200
-    _blockOtherActions: 0
-    _autoStart: 0
 --- !u!1 &437879741
 GameObject:
   m_ObjectHideFlags: 0
@@ -489,6 +354,7 @@ RectTransform:
   - {fileID: 4125469288052126283}
   - {fileID: 1587700203}
   - {fileID: 437879744}
+  - {fileID: 1726958614}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -512,7 +378,120 @@ MonoBehaviour:
   _homeButton: {fileID: 1587700204}
   _progressText: {fileID: 437879742}
   _cardFactory: {fileID: 5515768642731207305}
-  _tutorialManager: {fileID: 18837198}
+  _tutorialManager: {fileID: 1048053503}
+--- !u!1 &1048053502
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1048053504}
+  - component: {fileID: 1048053503}
+  m_Layer: 0
+  m_Name: TutorialManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1048053503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1048053502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06201dd608c87d14f9500c1e8f4889c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _tutorialConfigs:
+  - gameType: 0
+    steps:
+    - stepName: card_tap
+      target: 0
+      positionOffset: {x: 0, y: -400}
+      delayBeforeStep: 0.5
+      animation: 0
+      animationSpeed: 1
+      blockCardFlip: 0
+      blockAnswerButtons: 0
+      waitFor: 0
+      timeDelay: 0
+      customPosition: {x: 0, y: 0}
+    - stepName: select_answer
+      target: 1
+      positionOffset: {x: 100, y: -100}
+      delayBeforeStep: 0.5
+      animation: 0
+      animationSpeed: 1
+      blockCardFlip: 1
+      blockAnswerButtons: 0
+      waitFor: 1
+      timeDelay: 0
+      customPosition: {x: 0, y: 0}
+    - stepName: end_answer
+      target: 0
+      positionOffset: {x: 50, y: -200}
+      delayBeforeStep: 0.5
+      animation: 1
+      animationSpeed: 1
+      blockCardFlip: 1
+      blockAnswerButtons: 0
+      waitFor: 2
+      timeDelay: 0
+      customPosition: {x: 0, y: 0}
+  - gameType: 2
+    steps:
+    - stepName: card_tap
+      target: 0
+      positionOffset: {x: 0, y: -400}
+      delayBeforeStep: 0.5
+      animation: 0
+      animationSpeed: 1
+      blockCardFlip: 0
+      blockAnswerButtons: 0
+      waitFor: 0
+      timeDelay: 0
+      customPosition: {x: 0, y: 0}
+    - stepName: select_answer
+      target: 0
+      positionOffset: {x: 100, y: 0}
+      delayBeforeStep: 0.5
+      animation: 5
+      animationSpeed: 1
+      blockCardFlip: 1
+      blockAnswerButtons: 0
+      waitFor: 1
+      timeDelay: 0
+      customPosition: {x: 0, y: 0}
+  _tooltipPrefab: {fileID: 3707979005429422444, guid: af079e7c7667ae54ea5d882382547575, type: 3}
+  _sceneCanvas: {fileID: 589872477}
+  _tooltipContainer: {fileID: 1726958614}
+  _tapPulseDuration: 0.75
+  _swipeAnimationDuration: 1
+  _swipeDistance: 500
+  _smoothSwipeDuration: 1.2
+  _bidirectionalSwipeDuration: 2
+  _smoothSwipeDistance: 500
+--- !u!4 &1048053504
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1048053502}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1587700202
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -747,6 +726,41 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7230962420350793583, guid: b5eafc5807194d045a40917bed0d2afb, type: 3}
   m_PrefabInstance: {fileID: 1726154859}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1726958613
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1726958614}
+  m_Layer: 5
+  m_Name: TooltipContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1726958614
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1726958613}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 589872478}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1748431566
 GameObject:
   m_ObjectHideFlags: 0
@@ -1002,4 +1016,4 @@ SceneRoots:
   - {fileID: 589872478}
   - {fileID: 1726154859}
   - {fileID: 1672740439}
-  - {fileID: 18837197}
+  - {fileID: 1048053504}

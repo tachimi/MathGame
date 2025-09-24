@@ -19,14 +19,15 @@ namespace MathGame.UI.Cards
         public event Action<int> OnAnswerSelected;
         public Action OnSwipeUp;
         public Action OnSwipeDown;
-        
-        public bool IsFlipped => _isFlipped;
+
+        public ICardInteractionStrategy InteractionStrategy => _interactionStrategy;
         public Question CurrentQuestion => _currentQuestion;
         public RectTransform CardContainer => _cardContainer;
+        public Vector2 OriginalCardPosition { get => _originalCardPosition; set => _originalCardPosition = value; }
         public bool IsFlipping => _isFlipping;
+        public bool IsFlipped => _isFlipped;
         public bool IsPlayingSwipeAnimation => _isPlayingSwipeAnimation;
         public bool IsPlayingEntryAnimation => _isPlayingEntryAnimation;
-        public Vector2 OriginalCardPosition { get => _originalCardPosition; set => _originalCardPosition = value; }
 
         [Header("Base Card Components")]
         [SerializeField] protected RectTransform _cardContainer;
@@ -61,6 +62,7 @@ namespace MathGame.UI.Cards
         protected bool _isPlayingSwipeAnimation = false;
         protected bool _isPlayingEntryAnimation = false;
         protected bool _isFlipping = false;
+        protected bool _isTutorial;
 
 
         protected virtual void Awake()
@@ -83,9 +85,10 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Установить вопрос для карточки
         /// </summary>
-        public virtual void SetQuestion(Question question)
+        public virtual void SetQuestion(Question question, bool isTutorial)
         {
             _currentQuestion = question;
+            _isTutorial = isTutorial;
             _isAnswered = false;
             _isFlipped = false;
             _isPlayingSwipeAnimation = false;
@@ -145,7 +148,7 @@ namespace MathGame.UI.Cards
         /// <summary>
         /// Перевернуть карточку
         /// </summary>
-        public virtual void FlipCard()
+        public void FlipCard()
         {
             if (!CanFlip() || _isFlipping || _isPlayingSwipeAnimation || _isPlayingEntryAnimation)
             {
@@ -438,6 +441,14 @@ namespace MathGame.UI.Cards
         }
 
         #endregion
+
+        /// <summary>
+        /// Получить позицию первой кнопки ответа (переопределяется в наследниках)
+        /// </summary>
+        protected virtual Vector2 GetFirstAnswerButtonPosition()
+        {
+            return transform.position;
+        }
 
         /// <summary>
         /// Очистка ресурсов - переопределяется в наследниках

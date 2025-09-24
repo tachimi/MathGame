@@ -17,16 +17,17 @@ namespace MathGame.CardInteractions
     {
         private BaseMathCard _card;
         private FlashCard _flashCard;
-        
+
         // Состояние перетаскивания
         private bool _isDragging = false;
         private Vector2 _startTouchPosition;
         private Vector2 _startLocalPosition;
         private Vector2 _originalCardPosition;
         private float _swipeThreshold = 120f;
-        
-        public bool CanFlip => true;
+
+        public bool CanFlip => !IsFlipBlocked;
         public bool CanDrag => _card != null && _card.IsFlipped;
+        public bool IsFlipBlocked { get; set; } = false;
         
         public void Initialize(MonoBehaviour cardComponent)
         {
@@ -237,6 +238,7 @@ namespace MathGame.CardInteractions
             _card.CardContainer.anchoredPosition = targetPos;
         }
         
+
         public void Cleanup()
         {
             _card = null;
